@@ -1,17 +1,28 @@
 import { networks_ENUM } from '../constants';
 import ContractFactory from '../contracts';
 import { ethers } from 'ethers';
-import { IContractAbi, IContractAddress, IContractFactory } from '../types';
+import {
+  IContract,
+  IContractAbi,
+  IContractAddress,
+  IContractFactory,
+  IPocpConfig,
+  RegisterDaoResponse,
+} from '../types';
 
 class Pocp {
   signer!: ethers.Signer;
-  config: any;
+  config!: IPocpConfig;
   ContractAbi!: IContractAbi;
   ContractAddress!: IContractAddress;
   chainId: any;
+  PocpInstance!: IContract;
   contractInfo!: IContractFactory;
-  constructor(getSigner: any) {
+  constructor(getSigner: ethers.Signer, config: IPocpConfig | undefined) {
     this.signer = getSigner;
+    if (config) {
+      this.config = config;
+    }
   }
 
   createInstance = async () => {
@@ -19,10 +30,9 @@ class Pocp {
     this.contractInfo = new ContractFactory(this.chainId);
     this.ContractAbi = this.contractInfo.getAbi();
     this.ContractAddress = this.contractInfo.getAddress();
-
     //mumbai network config
     if (this.chainId === networks_ENUM.MUMBAI) {
-      return {
+      this.PocpInstance = {
         pocp: new ethers.Contract(
           this.ContractAddress?.pocp,
           this.ContractAbi?.pocp,
@@ -35,13 +45,28 @@ class Pocp {
         ),
       };
     }
-
     //polygon network config
     else if (this.chainId === networks_ENUM.POLYGON) {
-      return false;
+      this.PocpInstance = {
+        pocp: undefined,
+        forwarder: undefined,
+      };
     } else {
-      return false;
+      this.PocpInstance = {
+        pocp: undefined,
+        forwarder: undefined,
+      };
     }
+    return this.PocpInstance;
+  };
+
+  registerDaoToPocp = async (): Promise<RegisterDaoResponse | string> => {
+    if (this.config.relayer_token) {
+      // relayer approach
+    } else {
+      //contract call
+    }
+    return 'yo';
   };
 }
 

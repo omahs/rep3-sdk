@@ -6,12 +6,25 @@ export interface IContractAddress {
 }
 
 export interface IContractAbi {
-  pocp: ethers.ContractInterface;
-  forwarder: ethers.ContractInterface;
+  pocp: ethers.ContractInterface | string;
+  forwarder: ethers.ContractInterface | string;
 }
 
 export interface IContractFactory {
   network: number;
-  getAddress(): ContractAddress;
-  getAbi(): ContractAbi;
+  getAddress(): IContractAddress;
+  getAbi(): any;
+}
+
+export interface IContract {
+  pocp: ethers.Contract | undefined;
+  forwarder: ethers.Contract | undefined;
+}
+
+export interface RegisterDaoResponse {
+  tx_hash: string;
+}
+
+export interface IPocpConfig {
+  relayer_token?: string;
 }
