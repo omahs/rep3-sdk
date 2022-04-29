@@ -30,7 +30,8 @@ class Pocp {
     this.contractInfo = new ContractFactory(this.chainId);
     this.ContractAbi = this.contractInfo.getAbi();
     this.ContractAddress = this.contractInfo.getAddress();
-    //mumbai network config
+
+    // mumbai network config
     if (this.chainId === networks_ENUM.MUMBAI) {
       this.PocpInstance = {
         pocp: new ethers.Contract(
@@ -45,6 +46,7 @@ class Pocp {
         ),
       };
     }
+
     //polygon network config
     else if (this.chainId === networks_ENUM.POLYGON) {
       this.PocpInstance = {
@@ -57,7 +59,7 @@ class Pocp {
         forwarder: undefined,
       };
     }
-    return this.PocpInstance;
+    return Pocp;
   };
 
   registerDaoToPocp = async (): Promise<RegisterDaoResponse | string> => {

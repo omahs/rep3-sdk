@@ -27,7 +27,7 @@ class ContractManager {
   getAbi = () => {
     switch (this.network) {
       case networks_ENUM.MUMBAI:
-        return { pocp: pocp_mumbai, forwarder: forwarder_mumbai };
+        return { pocp: pocp_mumbai.abi, forwarder: forwarder_mumbai.abi };
       case networks_ENUM.POLYGON:
         return { pocp: 'not_deployed', forwarder: 'not_deployed' };
       default:
