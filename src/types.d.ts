@@ -22,7 +22,7 @@ export interface IContract {
 }
 
 export interface RegisterDaoResponse {
-  tx_hash: string;
+  transactionReceipt: ethers.Transaction;
 }
 
 export interface IPocpConfig {
