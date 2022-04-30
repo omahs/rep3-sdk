@@ -75,7 +75,7 @@ class Pocp {
   };
 
   /*
-   * @param data name in string
+   * @param dao name in string
    * @param array of approvers wallet address
    * @returns The transaction receipt is contract call success
    * @throws "Contract call fails"
@@ -90,6 +90,55 @@ class Pocp {
       const res = await (
         await this.PocpInstance.pocp?.register(daoName, approverAddresses)
       ).wait();
+      return res;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  /*
+   * @param community id in number
+   * @param array of claimers wallet address
+   * @param array of ipfs badge url
+   * @param array of identifiers
+   * @returns The transaction receipt is contract call success
+   * @throws "Contract call fails"
+   * @throws "Metamask errors"
+   */
+
+  approveBadgeToContributor = async (
+    communityId: number,
+    claimerAddresses: [string],
+    ipfsUrls: [string],
+    arrayOfIdentifiers: [string]
+  ): Promise<RegisterDaoResponse | string | unknown> => {
+    try {
+      const res = await (
+        await this.PocpInstance.pocp?.approveBadge(
+          communityId,
+          claimerAddresses,
+          ipfsUrls,
+          arrayOfIdentifiers
+        )
+      ).wait();
+      return res;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  /*
+   * @param array of token ids
+   * @returns The transaction receipt is contract call success
+   * @throws "Contract call fails"
+   * @throws "Metamask errors"
+   */
+
+  claimBadgesByClaimers = async (
+    tokenIds: [number]
+  ): Promise<RegisterDaoResponse | string | unknown> => {
+    try {
+      const res = await (await this.PocpInstance.pocp?.claim(tokenIds)).wait();
       return res;
     } catch (error) {
       throw error;
