@@ -8,10 +8,16 @@ import {
   IContractFactory,
   IPocpConfig,
   RegisterDaoResponse,
+  relayerData,
 } from '../types';
+import {
+  signedTypedData,
+  SignMethodFunctionCall,
+} from '../utils/signTypedData';
 
 class Pocp {
   signer!: ethers.Signer;
+  signerAddress!: string;
   config!: IPocpConfig;
   ContractAbi!: IContractAbi;
   ContractAddress!: IContractAddress;
@@ -36,6 +42,7 @@ class Pocp {
     this.contractInfo = new ContractFactory(this.chainId);
     this.ContractAbi = this.contractInfo.getAbi();
     this.ContractAddress = this.contractInfo.getAddress();
+    this.signerAddress = await this.signer.getAddress();
 
     // mumbai network config
     if (this.chainId === networks_ENUM.MUMBAI) {
@@ -83,16 +90,36 @@ class Pocp {
    */
 
   registerDaoToPocp = async (
-    daoName: string,
-    approverAddresses: [string]
-  ): Promise<RegisterDaoResponse | string | unknown> => {
-    try {
-      const res = await (
-        await this.PocpInstance.pocp?.register(daoName, approverAddresses)
-      ).wait();
-      return res;
-    } catch (error) {
-      throw error;
+    daoName?: string,
+    approverAddresses?: [string],
+    relayerConfig?: relayerData,
+    functionCall?: SignMethodFunctionCall
+  ) => {
+    console.log(relayerConfig);
+    if (relayerConfig) {
+      try {
+        const signedMessage = await signedTypedData(
+          this.signer,
+          this.signerAddress,
+          this.PocpInstance,
+          this.ContractAddress,
+          relayerConfig,
+          this.chainId,
+          functionCall
+        );
+        console.log('Signed message', signedMessage);
+      } catch (error) {
+        console.log('error', error);
+      }
+    } else {
+      try {
+        const res = await (
+          await this.PocpInstance.pocp?.register(daoName, approverAddresses)
+        ).wait();
+        return res;
+      } catch (error) {
+        throw error;
+      }
     }
   };
 
@@ -107,23 +134,42 @@ class Pocp {
    */
 
   approveBadgeToContributor = async (
-    communityId: number,
-    claimerAddresses: [string],
-    ipfsUrls: [string],
-    arrayOfIdentifiers: [string]
+    communityId?: number,
+    claimerAddresses?: [string],
+    ipfsUrls?: [string],
+    arrayOfIdentifiers?: [string],
+    relayerConfig?: relayerData,
+    functionCall?: SignMethodFunctionCall
   ): Promise<RegisterDaoResponse | string | unknown> => {
-    try {
-      const res = await (
-        await this.PocpInstance.pocp?.approveBadge(
-          communityId,
-          claimerAddresses,
-          ipfsUrls,
-          arrayOfIdentifiers
-        )
-      ).wait();
-      return res;
-    } catch (error) {
-      throw error;
+    if (relayerConfig) {
+      try {
+        const signedMessage = await signedTypedData(
+          this.signer,
+          this.signerAddress,
+          this.PocpInstance,
+          this.ContractAddress,
+          relayerConfig,
+          this.chainId,
+          functionCall
+        );
+        console.log('Signed message', signedMessage);
+      } catch (error) {
+        console.log('error', error);
+      }
+    } else {
+      try {
+        const res = await (
+          await this.PocpInstance.pocp?.approveBadge(
+            communityId,
+            claimerAddresses,
+            ipfsUrls,
+            arrayOfIdentifiers
+          )
+        ).wait();
+        return res;
+      } catch (error) {
+        throw error;
+      }
     }
   };
 
@@ -135,13 +181,34 @@ class Pocp {
    */
 
   claimBadgesByClaimers = async (
-    tokenIds: [number]
+    tokenIds?: [number],
+    relayerConfig?: relayerData,
+    functionCall?: SignMethodFunctionCall
   ): Promise<RegisterDaoResponse | string | unknown> => {
-    try {
-      const res = await (await this.PocpInstance.pocp?.claim(tokenIds)).wait();
-      return res;
-    } catch (error) {
-      throw error;
+    if (relayerConfig) {
+      try {
+        const signedMessage = await signedTypedData(
+          this.signer,
+          this.signerAddress,
+          this.PocpInstance,
+          this.ContractAddress,
+          relayerConfig,
+          this.chainId,
+          functionCall
+        );
+        console.log('Signed message', signedMessage);
+      } catch (error) {
+        console.log('error', error);
+      }
+    } else {
+      try {
+        const res = await (
+          await this.PocpInstance.pocp?.claim(tokenIds)
+        ).wait();
+        return res;
+      } catch (error) {
+        throw error;
+      }
     }
   };
 }

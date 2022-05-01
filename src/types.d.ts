@@ -28,3 +28,13 @@ export interface RegisterDaoResponse {
 export interface IPocpConfig {
   relayer_token?: string;
 }
+
+export interface relayerData {
+  daoName?: string;
+  approverAddresses?: [string];
+  communityId?: number;
+  claimerAddresses?: [string];
+  ipfsUrls?: [string];
+  arrayOfIdentifiers?: [string];
+  tokenIds?: [number];
+}
