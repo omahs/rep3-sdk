@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { BASE_URL } from '../constants';
 import { relayerRequestData, RelayRequestResponse } from '../types';
 
 export enum RelayMethodFunctionCall {
@@ -23,15 +24,11 @@ export const relayerServerCall = async (
     callback_api: 'https://staging.api.drepute.xyz/eth/callback',
   };
   try {
-    const res = await axios.post(
-      `https://staging.api.drepute.xyz:5001/eth/relay`,
-      data,
-      {
-        headers: {
-          'X-Authentication': relayerToken,
-        },
-      }
-    );
+    const res = await axios.post(BASE_URL.relayer, data, {
+      headers: {
+        'X-Authentication': relayerToken,
+      },
+    });
 
     return { transactionHash: res.data.data.hash };
   } catch (error) {
