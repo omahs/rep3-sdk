@@ -25,6 +25,10 @@ export interface RegisterDaoResponse {
   transactionReceipt: ethers.Transaction;
 }
 
+export interface RelayRequestResponse {
+  transactionHash: string;
+}
+
 export interface IPocpConfig {
   relayer_token?: string;
 }
@@ -37,4 +41,13 @@ export interface relayerData {
   ipfsUrls?: [string];
   arrayOfIdentifiers?: [string];
   tokenIds?: [number];
+}
+
+export interface relayerRequestData {
+  from: string;
+  to: string;
+  nonce: number;
+  value: number;
+  gas: number;
+  data: string | boolean | undefined;
 }

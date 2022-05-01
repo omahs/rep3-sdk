@@ -7,16 +7,19 @@ import {
   IContractAddress,
   IContractFactory,
   IPocpConfig,
-  RegisterDaoResponse,
-  relayerData,
 } from '../types';
 import {
   signedTypedData,
   SignMethodFunctionCall,
 } from '../utils/signTypedData';
+import {
+  relayerServerCall,
+  RelayMethodFunctionCall,
+} from '../utils/relayFunction';
 
 class Pocp {
   signer!: ethers.Signer;
+  provider!: ethers.providers.Provider;
   signerAddress!: string;
   config!: IPocpConfig;
   ContractAbi!: IContractAbi;
@@ -24,8 +27,14 @@ class Pocp {
   chainId: any;
   PocpInstance!: IContract;
   contractInfo!: IContractFactory;
-  constructor(getSigner: ethers.Signer, config: IPocpConfig | undefined) {
+  constructor(
+    getSigner: ethers.Signer,
+    getProvider: ethers.providers.Provider,
+    config: IPocpConfig | undefined
+  ) {
     this.signer = getSigner;
+    this.provider = getProvider;
+
     if (config) {
       this.config = config;
     }
@@ -44,7 +53,7 @@ class Pocp {
     this.ContractAddress = this.contractInfo.getAddress();
     this.signerAddress = await this.signer.getAddress();
 
-    // mumbai network config
+    // Polygon Mumbai network config
     if (this.chainId === networks_ENUM.MUMBAI) {
       this.PocpInstance = {
         pocp: new ethers.Contract(
@@ -61,7 +70,7 @@ class Pocp {
       return Pocp;
     }
 
-    //polygon network config
+    // Polygon Mainnet network config
     else if (this.chainId === networks_ENUM.POLYGON) {
       this.PocpInstance = {
         pocp: undefined,
@@ -87,31 +96,47 @@ class Pocp {
    * @returns The transaction receipt is contract call success
    * @throws "Contract call fails"
    * @throws "Metamask errors"
+   * @throws "Relayer Api Call errors"
    */
 
-  registerDaoToPocp = async (
-    daoName?: string,
-    approverAddresses?: [string],
-    relayerConfig?: relayerData,
-    functionCall?: SignMethodFunctionCall
-  ) => {
-    console.log(relayerConfig);
-    if (relayerConfig) {
-      try {
-        const signedMessage = await signedTypedData(
-          this.signer,
-          this.signerAddress,
-          this.PocpInstance,
-          this.ContractAddress,
-          relayerConfig,
-          this.chainId,
-          functionCall
-        );
-        console.log('Signed message', signedMessage);
-      } catch (error) {
-        console.log('error', error);
+  registerDaoToPocp = async (daoName: string, approverAddresses: [string]) => {
+    //performs relay function if config file is set
+
+    if (this.config) {
+      if (typeof this.config.relayer_token === 'string') {
+        try {
+          const signedMessage = await signedTypedData(
+            this.signer,
+            this.signerAddress,
+            this.PocpInstance,
+            this.ContractAddress,
+            { daoName, approverAddresses },
+            this.chainId,
+            SignMethodFunctionCall.Register
+          );
+
+          if (signedMessage.signature) {
+            const transactionHash = await relayerServerCall(
+              this.config.relayer_token,
+              RelayMethodFunctionCall.REGISTER,
+              signedMessage.data,
+              signedMessage.signature
+            );
+            const transactionReceipt = await this.provider.getTransaction(
+              transactionHash.transactionHash
+            );
+
+            return transactionReceipt;
+          }
+        } catch (error) {
+          throw error;
+        }
+      } else {
+        throw 'Relayer Token not a string or invalid';
       }
     } else {
+      //performs direct contract call if no config file is set
+
       try {
         const res = await (
           await this.PocpInstance.pocp?.register(daoName, approverAddresses)
@@ -131,30 +156,45 @@ class Pocp {
    * @returns The transaction receipt is contract call success
    * @throws "Contract call fails"
    * @throws "Metamask errors"
+   * @throws "Relayer Api Call errors"
    */
 
   approveBadgeToContributor = async (
     communityId?: number,
     claimerAddresses?: [string],
     ipfsUrls?: [string],
-    arrayOfIdentifiers?: [string],
-    relayerConfig?: relayerData,
-    functionCall?: SignMethodFunctionCall
-  ): Promise<RegisterDaoResponse | string | unknown> => {
-    if (relayerConfig) {
-      try {
-        const signedMessage = await signedTypedData(
-          this.signer,
-          this.signerAddress,
-          this.PocpInstance,
-          this.ContractAddress,
-          relayerConfig,
-          this.chainId,
-          functionCall
-        );
-        console.log('Signed message', signedMessage);
-      } catch (error) {
-        console.log('error', error);
+    arrayOfIdentifiers?: [string]
+  ) => {
+    if (this.config) {
+      if (typeof this.config.relayer_token === 'string') {
+        try {
+          const signedMessage = await signedTypedData(
+            this.signer,
+            this.signerAddress,
+            this.PocpInstance,
+            this.ContractAddress,
+            { communityId, claimerAddresses, ipfsUrls, arrayOfIdentifiers },
+            this.chainId,
+            SignMethodFunctionCall.ApproveBadge
+          );
+          if (signedMessage.signature) {
+            const transactionHash = await relayerServerCall(
+              this.config.relayer_token,
+              RelayMethodFunctionCall.APPROVE,
+              signedMessage.data,
+              signedMessage.signature
+            );
+            const transactionReceipt = await this.provider.getTransaction(
+              transactionHash.transactionHash
+            );
+
+            return transactionReceipt;
+          }
+        } catch (error) {
+          throw error;
+        }
+      } else {
+        throw 'Relayer token is not a string';
       }
     } else {
       try {
@@ -178,27 +218,40 @@ class Pocp {
    * @returns The transaction receipt is contract call success
    * @throws "Contract call fails"
    * @throws "Metamask errors"
+   * @throws "Relayer Api Call errors"
    */
 
-  claimBadgesByClaimers = async (
-    tokenIds?: [number],
-    relayerConfig?: relayerData,
-    functionCall?: SignMethodFunctionCall
-  ): Promise<RegisterDaoResponse | string | unknown> => {
-    if (relayerConfig) {
-      try {
-        const signedMessage = await signedTypedData(
-          this.signer,
-          this.signerAddress,
-          this.PocpInstance,
-          this.ContractAddress,
-          relayerConfig,
-          this.chainId,
-          functionCall
-        );
-        console.log('Signed message', signedMessage);
-      } catch (error) {
-        console.log('error', error);
+  claimBadgesByClaimers = async (tokenIds?: [number]) => {
+    if (this.config) {
+      if (typeof this.config.relayer_token === 'string') {
+        try {
+          const signedMessage = await signedTypedData(
+            this.signer,
+            this.signerAddress,
+            this.PocpInstance,
+            this.ContractAddress,
+            { tokenIds },
+            this.chainId,
+            SignMethodFunctionCall.ClaimBadge
+          );
+          if (signedMessage.signature) {
+            const transactionHash = await relayerServerCall(
+              this.config.relayer_token,
+              RelayMethodFunctionCall.CLAIM,
+              signedMessage.data,
+              signedMessage.signature
+            );
+            const transactionReceipt = await this.provider.getTransaction(
+              transactionHash.transactionHash
+            );
+
+            return transactionReceipt;
+          }
+        } catch (error) {
+          throw error;
+        }
+      } else {
+        throw 'Relayer token is not a string';
       }
     } else {
       try {
