@@ -23,6 +23,7 @@ export interface IContract {
 
 export interface RegisterDaoResponse {
   transactionReceipt: ethers.Transaction;
+  communityId: number;
 }
 
 export interface RelayRequestResponse {
@@ -51,3 +52,9 @@ export interface relayerRequestData {
   gas: number;
   data: string | boolean | undefined;
 }
+
+export type RegisterEventCallback = (
+  communityId: number,
+  communityName: string,
+  txSigner: string
+) => any;

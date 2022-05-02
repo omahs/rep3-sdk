@@ -16,6 +16,7 @@ import {
   relayerServerCall,
   RelayMethodFunctionCall,
 } from '../utils/relayFunction';
+import { eventListener, EventsEnum } from '../utils/eventListeners';
 
 class Pocp {
   signer!: ethers.Signer;
@@ -99,7 +100,11 @@ class Pocp {
    * @throws "Relayer Api Call errors"
    */
 
-  registerDaoToPocp = async (daoName: string, approverAddresses: [string]) => {
+  registerDaoToPocp = async (
+    daoName: string,
+    approverAddresses: [string],
+    callbackFunction?: Function
+  ) => {
     //performs relay function if config file is set
 
     if (this.config) {
@@ -126,6 +131,18 @@ class Pocp {
               transactionHash.transactionHash
             );
 
+            if (callbackFunction) {
+              try {
+                await eventListener(
+                  this.PocpInstance.pocp,
+                  EventsEnum.Register,
+                  callbackFunction,
+                  transactionHash.transactionHash
+                );
+              } catch (error) {
+                throw error;
+              }
+            }
             return transactionReceipt;
           }
         } catch (error) {
@@ -141,6 +158,18 @@ class Pocp {
         const res = await (
           await this.PocpInstance.pocp?.register(daoName, approverAddresses)
         ).wait();
+        if (callbackFunction) {
+          try {
+            await eventListener(
+              this.PocpInstance.pocp,
+              EventsEnum.Register,
+              callbackFunction,
+              res.transactionHash
+            );
+          } catch (error) {
+            throw error;
+          }
+        }
         return res;
       } catch (error) {
         throw error;
@@ -163,8 +192,10 @@ class Pocp {
     communityId?: number,
     claimerAddresses?: [string],
     ipfsUrls?: [string],
-    arrayOfIdentifiers?: [string]
+    arrayOfIdentifiers?: [string],
+    callbackFunction?: Function
   ) => {
+    console.log(arrayOfIdentifiers);
     if (this.config) {
       if (typeof this.config.relayer_token === 'string') {
         try {
@@ -187,6 +218,18 @@ class Pocp {
             const transactionReceipt = await this.provider.getTransaction(
               transactionHash.transactionHash
             );
+            if (callbackFunction) {
+              try {
+                await eventListener(
+                  this.PocpInstance.pocp,
+                  EventsEnum.Approve,
+                  callbackFunction,
+                  transactionHash.transactionHash
+                );
+              } catch (error) {
+                throw error;
+              }
+            }
 
             return transactionReceipt;
           }
@@ -206,6 +249,18 @@ class Pocp {
             arrayOfIdentifiers
           )
         ).wait();
+        if (callbackFunction) {
+          try {
+            await eventListener(
+              this.PocpInstance.pocp,
+              EventsEnum.Approve,
+              callbackFunction,
+              res.transactionHash
+            );
+          } catch (error) {
+            throw error;
+          }
+        }
         return res;
       } catch (error) {
         throw error;
@@ -221,7 +276,10 @@ class Pocp {
    * @throws "Relayer Api Call errors"
    */
 
-  claimBadgesByClaimers = async (tokenIds?: [number]) => {
+  claimBadgesByClaimers = async (
+    tokenIds?: [number],
+    callbackFunction?: Function
+  ) => {
     if (this.config) {
       if (typeof this.config.relayer_token === 'string') {
         try {
@@ -244,7 +302,18 @@ class Pocp {
             const transactionReceipt = await this.provider.getTransaction(
               transactionHash.transactionHash
             );
-
+            if (callbackFunction) {
+              try {
+                await eventListener(
+                  this.PocpInstance.pocp,
+                  EventsEnum.Claim,
+                  callbackFunction,
+                  transactionHash.transactionHash
+                );
+              } catch (error) {
+                throw error;
+              }
+            }
             return transactionReceipt;
           }
         } catch (error) {
@@ -258,6 +327,18 @@ class Pocp {
         const res = await (
           await this.PocpInstance.pocp?.claim(tokenIds)
         ).wait();
+        if (callbackFunction) {
+          try {
+            await eventListener(
+              this.PocpInstance.pocp,
+              EventsEnum.Claim,
+              callbackFunction,
+              res.transactionHash
+            );
+          } catch (error) {
+            throw error;
+          }
+        }
         return res;
       } catch (error) {
         throw error;
