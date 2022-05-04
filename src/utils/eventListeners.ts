@@ -15,6 +15,7 @@ export const eventListener = async (
   contractInstance?.on(eventType, async (...args) => {
     if (args[args.length - 1].transactionHash === txHash) {
       try {
+        console.log('Argument', args);
         await callbackFunction(args);
       } catch (error) {
         throw error;
