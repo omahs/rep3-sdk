@@ -4,8 +4,8 @@ export const networks_ENUM = {
 };
 
 export const deployed_address = {
-  POCP_Forwarder: '0x77632C372a61815e20e880655Ed2c72b5956C802',
-  POCP_Proxy: '0x48B7E1a8d73a9b09C6483eF7E39d4939fE9857E4',
+  POCP_Forwarder: '0x2C5b1eF6F9919043e8ec5DF32900815a25D1D3B5',
+  POCP_Proxy: '0xC35171D850e71DaFcdA016865AF61A4A3B3Df65b',
 };
 
 export const BASE_URL = {

@@ -195,7 +195,6 @@ class Pocp {
     arrayOfIdentifiers?: [string],
     callbackFunction?: Function
   ) => {
-    console.log(arrayOfIdentifiers);
     if (this.config) {
       if (typeof this.config.relayer_token === 'string') {
         try {
