@@ -17,12 +17,6 @@ import {
   RelayMethodFunctionCall,
 } from '../utils/relayFunction';
 import { eventListener, EventsEnum } from '../utils/eventListeners';
-import { subgraphGetterFunction } from '../utils/subgraphGetters';
-import {
-  claimedTokenQuery_claimer,
-  claimedTokenQuery,
-  approveTokenQuery,
-} from '../subgraphQuery';
 
 class Pocp {
   signer!: ethers.Signer;
