@@ -7,7 +7,11 @@ import {
 } from '../subgraphQuery';
 
 class PocpGetters {
-  constructor() {}
+  initialized = false;
+
+  constructor() {
+    this.initialized = true;
+  }
   /*
    * @param community id
    * @param claimer address
