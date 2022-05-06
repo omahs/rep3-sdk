@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -20,8 +20,9 @@
     "analyze": "size-limit --why"
   },
   "peerDependencies": {
-    "@apollo/client": "^3.6.2",
-    "graphql": "^16.4.0"
+    "@apollo/client": "3.6.2",
+    "graphql": "16.4.0",
+    "axios": "0.27.2"
   },
   "husky": {
     "hooks": {
