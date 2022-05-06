@@ -34,16 +34,6 @@
   "name": "pocp-service-sdk",
   "author": "Drepute Labs",
   "module": "dist/pocp-service-sdk.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/pocp-service-sdk.cjs.production.min.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/pocp-service-sdk.esm.js",
-      "limit": "10 KB"
-    }
-  ],
   "devDependencies": {
     "@apollo/client": "^3.6.2",
     "@size-limit/preset-small-lib": "^7.0.8",
