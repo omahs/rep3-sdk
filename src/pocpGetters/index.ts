@@ -3,9 +3,10 @@ import {
   claimedTokenQuery_claimer,
   claimedTokenQuery,
   approveTokenQuery,
+  communityWithTxHash,
 } from '../subgraphQuery';
 
-class PocpBadge {
+class PocpGetters {
   /*
    * @param community id
    * @param claimer address
@@ -92,6 +93,20 @@ class PocpBadge {
       throw error;
     }
   };
+
+  getCommunityIdOfHash = async (txhash: string) => {
+    try {
+      const communityDetail = await subgraphGetterFunction(
+        communityWithTxHash,
+        {
+          txhash,
+        }
+      );
+      return communityDetail;
+    } catch (error) {
+      throw error;
+    }
+  };
 }
 
-export default PocpBadge;
+export default PocpGetters;

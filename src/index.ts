@@ -1,6 +1,6 @@
 import Pocp from './pocp';
 import ContractManager from './contracts';
-import PocpBadge from './pocpBadges';
+import PocpGetters from './pocpGetters';
 export default Pocp;
 
-export { ContractManager, PocpBadge };
+export { ContractManager, PocpGetters };

@@ -46,3 +46,17 @@ query($communityId: String) {
     }
 }
 `;
+
+export const communityWithTxHash = `
+query($txhash: String) {
+communities ( where:{txhash:$txhash}){
+    id
+    name
+    approver{
+      id
+    }
+    txSigner
+    txhash
+  }
+}
+`;
