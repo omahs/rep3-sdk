@@ -9,18 +9,15 @@ const client = new ApolloClient({
 export const subgraphGetterFunction = async (
   tokensQuery: string,
   variables: any
-) => {
-  client
-    .query({
+): Promise<any> => {
+  try {
+    const data = client.query({
       query: gql(tokensQuery),
       variables,
-    })
-    .then(data => {
-      console.log('Subgraph data: ', data);
-      return data;
-    })
-    .catch(err => {
-      console.log('Error fetching data: ', err);
-      return err;
     });
+    return data;
+  } catch (error) {
+    console.log('Error fetching data: ', error);
+    throw error;
+  }
 };
