@@ -17,6 +17,8 @@ import {
   RelayMethodFunctionCall,
 } from '../utils/relayFunction';
 import { eventListener, EventsEnum } from '../utils/eventListeners';
+import { subgraphGetterFunction } from '../utils/subgraphGetters';
+import { claimedTokenQuery_claimer, claimedTokenQuery } from '../subgraphQuery';
 
 class Pocp {
   signer!: ethers.Signer;
@@ -342,6 +344,64 @@ class Pocp {
       } catch (error) {
         throw error;
       }
+    }
+  };
+
+  getClaimedBadgesOfClaimers = async (
+    communityId: string,
+    claimerAddress: string
+  ) => {
+    try {
+      const claimToken = await subgraphGetterFunction(
+        claimedTokenQuery_claimer,
+        {
+          communityId,
+          claimerAddress,
+        }
+      );
+      return claimToken;
+    } catch (error) {
+      console.log('error on fetching token', error);
+      throw error;
+    }
+  };
+
+  getClaimedBadges = async (communityId: string) => {
+    try {
+      const claimToken = await subgraphGetterFunction(claimedTokenQuery, {
+        communityId,
+      });
+      return claimToken;
+    } catch (error) {
+      console.log('error on fetching token', error);
+      throw error;
+    }
+  };
+
+  getApproveBadges = async (communityId: string) => {
+    try {
+      const approveToken = await subgraphGetterFunction(claimedTokenQuery, {
+        communityId,
+      });
+      return approveToken;
+    } catch (error) {
+      console.log('error on fetching token', error);
+      throw error;
+    }
+  };
+
+  getUnclaimedBadges = async (communityId: string, claimer: string) => {
+    try {
+      const approveToken = await subgraphGetterFunction(claimedTokenQuery, {
+        communityId,
+      });
+      const claimToken = await subgraphGetterFunction(claimedTokenQuery, {
+        communityId,
+      });
+      const unclaimedToken = [];
+    } catch (error) {
+      console.log('error on fetching token', error);
+      throw error;
     }
   };
 }
