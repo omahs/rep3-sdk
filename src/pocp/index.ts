@@ -390,20 +390,20 @@ class Pocp {
     }
   };
 
-  getUnclaimedBadges = async (communityId: string, claimer: string) => {
-    try {
-      const approveToken = await subgraphGetterFunction(claimedTokenQuery, {
-        communityId,
-      });
-      const claimToken = await subgraphGetterFunction(claimedTokenQuery, {
-        communityId,
-      });
-      const unclaimedToken = [];
-    } catch (error) {
-      console.log('error on fetching token', error);
-      throw error;
-    }
-  };
+  // getUnclaimedBadges = async (communityId: string, claimer: string) => {
+  //   try {
+  //     const approveToken = await subgraphGetterFunction(claimedTokenQuery, {
+  //       communityId,
+  //     });
+  //     const claimToken = await subgraphGetterFunction(claimedTokenQuery, {
+  //       communityId,
+  //     });
+  //     const unclaimedToken = [];
+  //   } catch (error) {
+  //     console.log('error on fetching token', error);
+  //     throw error;
+  //   }
+  // };
 }
 
 export default Pocp;
