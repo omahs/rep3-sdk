@@ -93,6 +93,7 @@ class PocpGetters {
           unclaimedToken.push(approve);
         }
       });
+      console.log(approveToken, claimToken, unclaimedToken);
       return unclaimedToken;
     } catch (error) {
       throw error;
