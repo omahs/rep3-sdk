@@ -87,7 +87,7 @@ class PocpGetters {
           (x: any) => x.id === approve.id
         );
         if (
-          filteredToken.length === 1 &&
+          filteredToken.length === 0 &&
           filteredToken[0].claimer === claimer
         ) {
           unclaimedToken.push(approve);
