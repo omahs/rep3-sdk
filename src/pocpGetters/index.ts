@@ -76,7 +76,7 @@ class PocpGetters {
    * @throws "Error"
    */
 
-  getUnclaimedBadges = async (communityId: string, claimer: string) => {
+  getUnclaimedBadges = async (communityId: string) => {
     try {
       const approveToken = await this.getApproveBadges(communityId);
       const claimToken = await this.getClaimedBadges(communityId);
@@ -86,10 +86,7 @@ class PocpGetters {
         const filteredToken = claimToken?.data?.pocpTokens.filter(
           (x: any) => x.id === approve.id
         );
-        if (
-          filteredToken.length === 0 &&
-          filteredToken[0].claimer === claimer
-        ) {
+        if (filteredToken.length === 0) {
           unclaimedToken.push(approve);
         }
       });
