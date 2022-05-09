@@ -20,9 +20,8 @@
     "analyze": "size-limit --why"
   },
   "peerDependencies": {
-    "@apollo/client": "3.6.2",
-    "axios": "0.27.2",
-    "graphql": "16.4.0"
+    "axios": "*",
+    "urql": "*"
   },
   "husky": {
     "hooks": {
@@ -39,11 +38,9 @@
   "author": "Drepute Labs",
   "module": "dist/pocp-service-sdk.esm.js",
   "devDependencies": {
-    "@apollo/client": "^3.6.2",
     "@size-limit/preset-small-lib": "^7.0.8",
     "axios": "^0.27.2",
     "ethers": "^5.6.4",
-    "graphql": "^16.4.0",
     "husky": "^7.0.4",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",
