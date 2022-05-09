@@ -9,11 +9,7 @@ import axios from 'axios';
 import { BASE_URL } from '../constants';
 
 class PocpGetters {
-  initialized = false;
-
-  constructor() {
-    this.initialized = true;
-  }
+  constructor() {}
   /*
    * @param community id
    * @param claimer address
