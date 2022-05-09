@@ -10,7 +10,7 @@ export const subgraphGetterFunction = async (
   variables: any
 ): Promise<any> => {
   try {
-    const data = client.query(tokensQuery, { variables });
+    const data = await client.query(tokensQuery, variables).toPromise();
     return data;
   } catch (error) {
     console.log('Error fetching data: ', error);

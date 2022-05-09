@@ -59,10 +59,7 @@ class PocpGetters {
       const approveToken = await subgraphGetterFunction(approveTokenQuery, {
         communityId,
       });
-      // const approvedTokens = await axios.post(`${BASE_URL.subgraph}`, {
-      //   query: `{\n  pocpTokens( where:{community:${communityId}}) {\n      id\n    community {\n      id\n      name\n      txSigner\n      txhash\n    }\n      ipfsMetaUri\n      claimer\n      approver    \n    }\n \n}\n`,
-      //   variables: null,
-      // });
+
       return approveToken;
     } catch (error) {
       throw error;
