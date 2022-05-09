@@ -84,8 +84,9 @@ class PocpGetters {
 
       approveToken?.data?.approvedTokens.forEach((approve: any) => {
         const filteredToken = claimToken?.data?.pocpTokens.filter(
-          (x: any) => x.id === approve.id
+          (x: any) => x.id.toString() === approve.id.toString()
         );
+        console.log('filtered Token', filteredToken, approve.id);
         if (filteredToken.length === 0) {
           unclaimedToken.push(approve);
         }
