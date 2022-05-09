@@ -3,6 +3,7 @@ import { createClient } from 'urql';
 
 const client = createClient({
   url: BASE_URL.subgraph,
+  requestPolicy: 'network-only',
 });
 
 export const subgraphGetterFunction = async (
