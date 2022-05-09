@@ -5,6 +5,8 @@ import {
   approveTokenQuery,
   communityWithTxHash,
 } from '../subgraphQuery';
+import axios from 'axios';
+import { BASE_URL } from '../constants';
 
 class PocpGetters {
   initialized = false;
@@ -60,10 +62,14 @@ class PocpGetters {
 
   getApproveBadges = async (communityId: string) => {
     try {
-      const approveToken = await subgraphGetterFunction(approveTokenQuery, {
-        communityId,
+      // const approveToken = await subgraphGetterFunction(approveTokenQuery, {
+      //   communityId,
+      // });
+      const approvedTokens = await axios.post(`${BASE_URL.subgraph}`, {
+        query: `{\n  pocpTokens( where:{community:${communityId}}) {\n      id\n    community {\n      id\n      name\n      txSigner\n      txhash\n    }\n      ipfsMetaUri\n      claimer\n      approver    \n    }\n \n}\n`,
+        variables: null,
       });
-      return approveToken;
+      return approvedTokens;
     } catch (error) {
       throw error;
     }
