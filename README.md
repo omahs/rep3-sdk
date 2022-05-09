@@ -1,103 +1,108 @@
-# TSDX User Guide
+# POCP Service SDK
 
-Congrats! You just saved yourself hours of work by bootstrapping this project with TSDX. Let’s get you oriented with what’s here and how to use it.
+Inspired by POAP(Proof of Attendance Protocol), the Proof of Contribution protocol (or POCP for short) allows communities to mint contribution badges for the contributions by their community members.
+Badges are Soulbound and verified by peers
+This document details the technical specifications and integration process. 
 
-> This TSDX setup is meant for developing libraries (not apps!) that can be published to NPM. If you’re looking to build a Node app, you could use `ts-node-dev`, plain `ts-node`, or simple `tsc`.
 
-> If you’re new to TypeScript, checkout [this handy cheatsheet](https://devhints.io/typescript)
+## Installation
 
-## Commands
-
-TSDX scaffolds your new library inside `/src`.
-
-To run TSDX, use:
+Install the package with yarn or npm:
 
 ```bash
-npm start # or yarn start
+npm install pocp-service-sdk
+yarn add pocp-service-sdk
 ```
 
-This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` causes a rebuild to `/dist`.
+## Getting Started
 
-To do a one-off build, use `npm run build` or `yarn build`.
+The following steps show how to set up the POCP Service SDK, signup for a new Community, approve a POCP badge and claim the approved badge for the contributor. These interaction can be done directly through contract interaction or a relayer
 
-To run tests, use `npm test` or `yarn test`.
+### 1. Registring the DAO with POCP
 
-## Configuration
+Register function takes the name of Dao and an array of owners as required parameters. For listening to the event emitted you could pass it as event callback which gets event emitted as parameter
 
-Code quality is set up for you with `prettier`, `husky`, and `lint-staged`. Adjust the respective fields in `package.json` accordingly.
+```javascript
+import Pocp from "pocp-service-sdk"
 
-### Jest
-
-Jest tests are set up to run with `npm test` or `yarn test`.
-
-### Bundle Analysis
-
-[`size-limit`](https://github.com/ai/size-limit) is set up to calculate the real cost of your library with `npm run size` and visualize the bundle with `npm run analyze`.
-
-#### Setup Files
-
-This is the folder structure we set up for you:
-
-```txt
-/src
-  index.tsx       # EDIT THIS
-/test
-  blah.test.tsx   # EDIT THIS
-.gitignore
-package.json
-README.md         # EDIT THIS
-tsconfig.json
+# add relyer_token for a gasless transaction
+ const pocp = new Pocp(signer, provider,
+ {
+   relayer_token: "f1xxxxx-b2xx-44xx-9xxd-218xxxxxxf" //optional
+ })
+ await pocp.createInstance()
+ const res = await pocp.registerDaoToPocp(
+       "Drepute", // name *required
+      ["0x0EB...4b53"], // array of string *required 
+       (eventEmitted)=>{} // callback function fires when event is emmitted
+ )
 ```
 
-### Rollup
+### 2. Approving a POCP badge for contributors
+Approve function takes the community Id, array of claimer's addresses, array of IPFS URL, and array of identifiers. For listening to the event emitted you could pass it as an event callback which gets the event emitted as a parameter
 
-TSDX uses [Rollup](https://rollupjs.org) as a bundler and generates multiple rollup configs for various module formats and build settings. See [Optimizations](#optimizations) for details.
+```javascript
 
-### TypeScript
-
-`tsconfig.json` is set up to interpret `dom` and `esnext` types, as well as `react` for `jsx`. Adjust according to your needs.
-
-## Continuous Integration
-
-### GitHub Actions
-
-Two actions are added by default:
-
-- `main` which installs deps w/ cache, lints, tests, and builds on all pushes against a Node and OS matrix
-- `size` which comments cost comparison of your library on every pull request using [`size-limit`](https://github.com/ai/size-limit)
-
-## Optimizations
-
-Please see the main `tsdx` [optimizations docs](https://github.com/palmerhq/tsdx#optimizations). In particular, know that you can take advantage of development-only optimizations:
-
-```js
-// ./types/index.d.ts
-declare var __DEV__: boolean;
-
-// inside your code...
-if (__DEV__) {
-  console.log('foo');
-}
+ const res = await pocp.approveBadgeToContributor(
+       12, // community id as int *required
+       ["0x0EB...4b53"], // array of claimer's addresses *required
+       ["ipfs://baf.....di"],// array of ipfs metadata uri *required
+       ["afk..13"], // array of identifier or id *required
+       (eventEmitted)=>{} // callback function fires when event is emmitted
+ )
 ```
 
-You can also choose to install and use [invariant](https://github.com/palmerhq/tsdx#invariant) and [warning](https://github.com/palmerhq/tsdx#warning) functions.
+### 3. Claiming a POCP badge by contributors
+The claim function takes an array of token Ids as parameters For listening to the event emitted you could pass it as an event callback which gets the event emitted as a parameter
 
-## Module Formats
+```javascript
 
-CJS, ESModules, and UMD module formats are supported.
+ const res = await pocp.claimBadgesByClaimers(
+       [1], //aray of token ids to be claimed
+       (eventEmitted)=>{} // callback function fires when event is emmitted
+ )
+```
 
-The appropriate paths are configured in `package.json` and `dist/index.js` accordingly. Please report if any issues are found.
+### 4. Get all approved POCP badges for a community
+This getter function takes the community Id as parameters and returns the list of approved tokens for the Dao
 
-## Named Exports
+```javascript
+ import { PocpGetters } from "pocp-service-sdk"
 
-Per Palmer Group guidelines, [always use named exports.](https://github.com/palmerhq/typescript#exports) Code split inside your React app instead of your React library.
+ const pocpGetter = new PocpGetters()
+ const approvedToken = await pocpGetter.getApproveBadges(
+       "1" // community id * required
+ )
+```
+### 5. Get all claimed POCP badges for a community
+This getter function takes the community Id as parameters and returns the list of claimed tokens for the Dao
 
-## Including Styles
+```javascript
 
-There are many ways to ship styles, including with CSS-in-JS. TSDX has no opinion on this, configure how you like.
+ const claimedToken = await pocpGetter.getClaimedBadges(
+       "1" // community id * required
+ )
+```
+### 6. Get all claimed POCP badges for a contributor to a community
+This getter function takes the community Id and address as parameters and returns the list of claimed tokens for the contributor of a Dao
 
-For vanilla CSS, you can include it at the root directory and add it to the `files` section in your `package.json`, so that it can be imported separately by your users and run through their bundler's loader.
+```javascript
 
-## Publishing to NPM
+ const claimedToken = await pocpGetter.getClaimedBadgesOfClaimers(
+       "1", // community id * required
+       "0x0EB...4b53"
+ )
+```
+### 7. Get all unclaimed POCP badges for a community
+This getter function takes the community Id as parameters and returns the list of unclaimed tokens for the Dao
 
-We recommend using [np](https://github.com/sindresorhus/np).
+```javascript
+
+ const unclaimedToken = await pocpGetter.getUnclaimedBadges(
+       "1" // community id * required
+ )
+```
+
+
+## License
+[MIT](https://choosealicense.com/licenses/mit/)
