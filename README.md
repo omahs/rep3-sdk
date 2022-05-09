@@ -58,7 +58,51 @@ The claim function takes an array of token Ids as parameters For listening to th
 ```javascript
 
  const res = await pocp.claimBadgesByClaimers(
-       [parseInt(tokenId)], //aray of token ids to be claimed
+       [1], //aray of token ids to be claimed
        (eventEmitted)=>{} // callback function fires when event is emmitted
  )
 ```
+
+### 4. Get all approved POCP badges for a community
+This getter function takes the community Id as parameters and returns the list of approved tokens for the Dao
+
+```javascript
+ import { PocpGetters } from "pocp-service-sdk"
+
+ const pocpGetter = new PocpGetters()
+ const approvedToken = await pocpGetter.getApproveBadges(
+       "1" // community id * required
+ )
+```
+### 5. Get all claimed POCP badges for a community
+This getter function takes the community Id as parameters and returns the list of claimed tokens for the Dao
+
+```javascript
+
+ const claimedToken = await pocpGetter.getClaimedBadges(
+       "1" // community id * required
+ )
+```
+### 6. Get all claimed POCP badges for a contributor to a community
+This getter function takes the community Id and address as parameters and returns the list of claimed tokens for the contributor of a Dao
+
+```javascript
+
+ const claimedToken = await pocpGetter.getClaimedBadgesOfClaimers(
+       "1", // community id * required
+       "0x0EB...4b53"
+ )
+```
+### 7. Get all unclaimed POCP badges for a community
+This getter function takes the community Id as parameters and returns the list of unclaimed tokens for the Dao
+
+```javascript
+
+ const unclaimedToken = await pocpGetter.getUnclaimedBadges(
+       "1" // community id * required
+ )
+```
+
+
+## License
+[MIT](https://choosealicense.com/licenses/mit/)
