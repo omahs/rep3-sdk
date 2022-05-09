@@ -1,9 +1,8 @@
-import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 import { BASE_URL } from '../constants';
+import { createClient } from 'urql';
 
-const client = new ApolloClient({
-  uri: BASE_URL.subgraph,
-  cache: new InMemoryCache(),
+const client = createClient({
+  url: BASE_URL.subgraph,
 });
 
 export const subgraphGetterFunction = async (
@@ -11,10 +10,7 @@ export const subgraphGetterFunction = async (
   variables: any
 ): Promise<any> => {
   try {
-    const data = client.query({
-      query: gql(tokensQuery),
-      variables,
-    });
+    const data = client.query(tokensQuery, { variables });
     return data;
   } catch (error) {
     console.log('Error fetching data: ', error);
