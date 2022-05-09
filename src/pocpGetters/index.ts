@@ -86,7 +86,7 @@ class PocpGetters {
         const filteredToken = claimToken?.data?.pocpTokens.filter(
           (x: any) => x.id.toString() === approve.id.toString()
         );
-        console.log('filtered Token', filteredToken, approve.id);
+        console.log('filtered Token', filteredToken, approve.id, claimToken);
         if (filteredToken.length === 0) {
           unclaimedToken.push(approve);
         }
