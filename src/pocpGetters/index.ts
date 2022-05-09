@@ -78,8 +78,13 @@ class PocpGetters {
 
   getUnclaimedBadges = async (communityId: string) => {
     try {
-      const approveToken = await this.getApproveBadges(communityId);
-      const claimToken = await this.getClaimedBadges(communityId);
+      //change
+      const approveToken = await subgraphGetterFunction(approveTokenQuery, {
+        communityId,
+      });
+      const claimToken = await subgraphGetterFunction(claimedTokenQuery, {
+        communityId,
+      });
       const unclaimedToken: any[] = [];
 
       approveToken?.data?.approvedTokens.forEach((approve: any) => {
