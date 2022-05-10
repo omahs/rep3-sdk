@@ -103,6 +103,16 @@ This getter function takes the community Id as parameters and returns the list o
  )
 ```
 
+### 7. Get  POCP community id from transaction hash
+This getter function takes the transaction hash as parameters and returns the community details associated with the hash
+
+```javascript
+
+ const communityIfo = await pocpGetter.getCommunityIdOfHash(
+       "0xxsde...234" // transaction hash * required
+ )
+```
+
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
