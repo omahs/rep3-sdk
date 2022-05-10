@@ -100,6 +100,12 @@ class PocpGetters {
     }
   };
 
+  /*
+   * @param tx hash
+   * @returns Community Info
+   * @throws "Error"
+   */
+
   getCommunityIdOfHash = async (txhash: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
@@ -109,6 +115,29 @@ class PocpGetters {
         }
       );
       return communityDetail;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  /*
+   * @param custom the graph query
+   * @param if variable available
+   * @returns result for the query from subgraph
+   * @throws "Error"
+   */
+
+  getForCustomQuery = async (
+    customQuery: string,
+    variableObject?: any | undefined
+  ) => {
+    try {
+      const approveToken = await subgraphGetterFunction(
+        customQuery,
+        variableObject && variableObject
+      );
+
+      return approveToken;
     } catch (error) {
       throw error;
     }
