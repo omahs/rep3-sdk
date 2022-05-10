@@ -21,6 +21,7 @@ export const relayerServerCall = async (
     function: functionCall,
     request_data: request,
     signature,
+    chain_id: 80001,
     callback_api: 'https://staging.api.drepute.xyz/eth/callback',
   };
   try {
