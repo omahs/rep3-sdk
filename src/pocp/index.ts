@@ -122,6 +122,7 @@ class Pocp {
 
           if (signedMessage.signature) {
             const transactionHash = await relayerServerCall(
+              this.config.url,
               this.config.relayer_token,
               RelayMethodFunctionCall.REGISTER,
               signedMessage.data,
@@ -209,6 +210,7 @@ class Pocp {
           );
           if (signedMessage.signature) {
             const transactionHash = await relayerServerCall(
+              this.config.url,
               this.config.relayer_token,
               RelayMethodFunctionCall.APPROVE,
               signedMessage.data,
@@ -293,6 +295,7 @@ class Pocp {
           );
           if (signedMessage.signature) {
             const transactionHash = await relayerServerCall(
+              this.config.url,
               this.config.relayer_token,
               RelayMethodFunctionCall.CLAIM,
               signedMessage.data,

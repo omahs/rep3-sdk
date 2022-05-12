@@ -32,6 +32,7 @@ export interface RelayRequestResponse {
 
 export interface IPocpConfig {
   relayer_token?: string;
+  url: string;
 }
 
 export interface relayerData {
