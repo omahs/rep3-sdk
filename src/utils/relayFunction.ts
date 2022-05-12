@@ -15,13 +15,14 @@ export const relayerServerCall = async (
   relayerToken: string,
   functionCall: RelayMethodFunctionCall,
   request: relayerRequestData,
-  signature: string
+  signature: string,
+  chainId: number
 ): Promise<RelayRequestResponse> => {
   const data = {
     function: functionCall,
     request_data: request,
     signature,
-    chain_id: 80001,
+    chain_id: chainId,
     callback_api: 'https://staging.api.drepute.xyz/eth/callback',
   };
   try {

@@ -126,7 +126,8 @@ class Pocp {
               this.config.relayer_token,
               RelayMethodFunctionCall.REGISTER,
               signedMessage.data,
-              signedMessage.signature
+              signedMessage.signature,
+              this.chainId
             );
             const transactionReceipt = await this.provider.getTransaction(
               transactionHash.transactionHash
@@ -214,7 +215,8 @@ class Pocp {
               this.config.relayer_token,
               RelayMethodFunctionCall.APPROVE,
               signedMessage.data,
-              signedMessage.signature
+              signedMessage.signature,
+              this.chainId
             );
             const transactionReceipt = await this.provider.getTransaction(
               transactionHash.transactionHash
@@ -299,7 +301,8 @@ class Pocp {
               this.config.relayer_token,
               RelayMethodFunctionCall.CLAIM,
               signedMessage.data,
-              signedMessage.signature
+              signedMessage.signature,
+              this.chainId
             );
             const transactionReceipt = await this.provider.getTransaction(
               transactionHash.transactionHash
