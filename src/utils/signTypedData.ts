@@ -72,7 +72,7 @@ export const signedTypedData = async (
       ForwardRequest,
     },
     domain: {
-      name: 'MinimalForwarder',
+      name: 'DreputeForwarder',
       version: '0.0.1',
       chainId,
       verifyingContract: ContractAddress.forwarder,
