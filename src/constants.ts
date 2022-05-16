@@ -11,5 +11,5 @@ export const deployed_address = {
 export const BASE_URL = {
   relayer: 'https://staging.api.drepute.xyz:5001/eth/relay',
   subgraph:
-    'https://api.thegraph.com/subgraphs/id/QmctWyJKqKwU7XJmxK8c1MA3BW4YPEzN8LbSmECcP8N6gk',
+    'https://api.thegraph.com/subgraphs/id/QmXM1pVbWqEeB5iF6Wg5DsUKtaGwZduKhN5H24TvYg1xHG',
 };
