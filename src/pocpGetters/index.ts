@@ -7,7 +7,10 @@ import {
 } from '../subgraphQuery';
 
 class PocpGetters {
-  constructor() {}
+  network: number;
+  constructor(givenNetwork: number) {
+    this.network = givenNetwork;
+  }
   /*
    * @param community id
    * @param claimer address
@@ -24,7 +27,8 @@ class PocpGetters {
         {
           communityId,
           claimerAddress,
-        }
+        },
+        this.network
       );
       return claimToken;
     } catch (error) {
@@ -39,9 +43,13 @@ class PocpGetters {
    */
   getClaimedBadges = async (communityId: string) => {
     try {
-      const claimToken = await subgraphGetterFunction(claimedTokenQuery, {
-        communityId,
-      });
+      const claimToken = await subgraphGetterFunction(
+        claimedTokenQuery,
+        {
+          communityId,
+        },
+        this.network
+      );
       return claimToken;
     } catch (error) {
       throw error;
@@ -56,9 +64,13 @@ class PocpGetters {
 
   getApproveBadges = async (communityId: string) => {
     try {
-      const approveToken = await subgraphGetterFunction(approveTokenQuery, {
-        communityId,
-      });
+      const approveToken = await subgraphGetterFunction(
+        approveTokenQuery,
+        {
+          communityId,
+        },
+        this.network
+      );
 
       return approveToken;
     } catch (error) {
@@ -76,12 +88,20 @@ class PocpGetters {
   getUnclaimedBadges = async (communityId: string) => {
     try {
       //change
-      const approveToken = await subgraphGetterFunction(approveTokenQuery, {
-        communityId,
-      });
-      const claimToken = await subgraphGetterFunction(claimedTokenQuery, {
-        communityId,
-      });
+      const approveToken = await subgraphGetterFunction(
+        approveTokenQuery,
+        {
+          communityId,
+        },
+        this.network
+      );
+      const claimToken = await subgraphGetterFunction(
+        claimedTokenQuery,
+        {
+          communityId,
+        },
+        this.network
+      );
       const unclaimedToken: any[] = [];
 
       approveToken?.data?.approvedTokens.forEach((approve: any) => {
@@ -112,7 +132,8 @@ class PocpGetters {
         communityWithTxHash,
         {
           txhash,
-        }
+        },
+        this.network
       );
       return communityDetail;
     } catch (error) {
@@ -134,7 +155,8 @@ class PocpGetters {
     try {
       const approveToken = await subgraphGetterFunction(
         customQuery,
-        variableObject && variableObject
+        variableObject && variableObject,
+        this.network
       );
 
       return approveToken;

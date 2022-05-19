@@ -74,12 +74,18 @@ class Pocp {
     // Polygon Mainnet network config
     else if (this.chainId === networks_ENUM.POLYGON) {
       this.PocpInstance = {
-        pocp: undefined,
-        forwarder: undefined,
+        pocp: new ethers.Contract(
+          this.ContractAddress?.pocp,
+          this.ContractAbi?.pocp,
+          this.signer
+        ),
+        forwarder: new ethers.Contract(
+          this.ContractAddress?.forwarder,
+          this.ContractAbi?.forwarder,
+          this.signer
+        ),
       };
-      throw {
-        errorMessage: `Pocp V1 is currently in mumbai testnet  and not in main net yet !`,
-      };
+      return Pocp;
     } else {
       this.PocpInstance = {
         pocp: undefined,
