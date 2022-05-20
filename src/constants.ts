@@ -18,5 +18,5 @@ export const BASE_URL = {
   subgraph_mainnet:
     'https://api.thegraph.com/subgraphs/id/QmdfbRhc2m33fJWXhwcwBNxSBjWqoCFNMkxzEh97n5ws9d',
   subgraph:
-    'https://api.thegraph.com/subgraphs/id/QmTVvWNXEprmdiwXLyGAJ5uub9Q7vBmEuqiX9grtbmT9AZ',
+    'https://api.thegraph.com/subgraphs/id/Qmeym2txcTkKg6C7mekgm3JtvFDQ2suQfx2QrdBHGgiPq3',
 };
