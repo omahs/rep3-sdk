@@ -23,7 +23,7 @@ The three main functions of this protocol are creating a community, approving a 
 >Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
 
 ### 1. Creating a community
-The first step to using this protocol is creating a community. This is done by the community admin(s) using the `registerDaoToPocp` function. This takes the name of the DAO and array of owners' addresses as parameters. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
+The first step to using this protocol is creating a community. This is done by the community admin(s) using the `registerDaoToPocp` function. This takes the name of the DAO and an array of owners' addresses as parameters. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
 
 ```javascript
 import Pocp from "pocp-service-sdk"
