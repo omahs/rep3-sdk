@@ -1,9 +1,12 @@
 # POCP Service SDK
 
-Inspired by POAP(Proof of Attendance Protocol), the Proof of Contribution protocol (or POCP for short) allows communities to mint contribution badges for the contributions by their community members.
-Badges are Soulbound and verified by peers
-This document details the technical specifications and integration process. 
+POCP (or Proof of Contribution Protocol) is the beta version of the REP3 Protocol--a credential management tool for DAOs and their members. 
 
+Simply put, this tool enables DAOs to give their contributors a stamp of approval via badges, which the contributors can then collect and proudly show-off to their family, friends and potential employers. 
+
+The badges are [Soulbound](https://vitalik.ca/general/2022/01/26/soulbound.html) ERC-721 tokens. In the current version, each new badge corresponds to a single contribution, however, in the next version, badges will be upgradable (meaning multiple contributions will be tracked in a single badge).
+
+The rest of this document details the technical specifications and integration process of REP3 Protocol's beta version.
 
 ## Installation
 
@@ -16,11 +19,11 @@ yarn add pocp-service-sdk
 
 ## Getting Started
 
-The following steps show how to set up the POCP Service SDK, signup for a new Community, approve a POCP badge and claim the approved badge for the contributor. These interaction can be done directly through contract interaction or a relayer
+The three main functions of this protocol are creating a community, approving a badge and claiming the approved badge. These functions (as found in pocp-service-sdk/src/pocp/index.ts/) are described below. Let's go through them one-by-one. 
+>Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
 
-### 1. Registring the DAO with POCP
-
-Register function takes the name of Dao and an array of owners as required parameters. For listening to the event emitted you could pass it as event callback which gets event emitted as parameter
+### 1. Creating a community
+The first step to using this protocol is creating a community. This is done by the community admin(s) using the `registerDaoToPocp` function. This takes the name of the DAO and an array of owners' addresses as parameters. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
 
 ```javascript
 import Pocp from "pocp-service-sdk"
@@ -38,8 +41,8 @@ import Pocp from "pocp-service-sdk"
  )
 ```
 
-### 2. Approving a POCP badge for contributors
-Approve function takes the community Id, array of claimer's addresses, array of IPFS URL, and array of identifiers. For listening to the event emitted you could pass it as an event callback which gets the event emitted as a parameter
+### 2. Approving a badge
+Before contributors can mint the badge to their addresses, the community admins must "ready" the badge for claiming. This is done via the `approveBadgeToContributor` function. It takes the community ID and three arrays (of IPFS URLs, claimers' addresses, and Identifiers) as parameters. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
 
 ```javascript
 
@@ -52,19 +55,25 @@ Approve function takes the community Id, array of claimer's addresses, array of 
  )
 ```
 
-### 3. Claiming a POCP badge by contributors
-The claim function takes an array of token Ids as parameters For listening to the event emitted you could pass it as an event callback which gets the event emitted as a parameter
+### 3. Claiming the approved badge 
+Finally, the contributors can claim the approved badges which mints them to their addresses. This happens via the `claimBadgesByClaimers` function, which takes an array of token IDs as its parameter. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
 
 ```javascript
 
  const res = await pocp.claimBadgesByClaimers(
-       [1], //aray of token ids to be claimed
+       [1], //array of token ids to be claimed
        (eventEmitted)=>{} // callback function fires when event is emmitted
  )
 ```
 
-### 4. Get all approved POCP badges for a community
-This getter function takes the community Id as parameters and returns the list of approved tokens for the Dao
+## Some Other Functions 
+
+There are also some other functions that can, in general, help teams get their usage history of the protocol. These functions (as found in 
+pocp-service-sdk/src/pocpGetters/index.ts) are described below. Let's go through them one-by-one.
+>Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
+
+### 1. Get all approved badges for a community
+The `getApproveBadges` getter function takes the community ID as a parameter, and returns the list of approved tokens for the DAO.
 
 ```javascript
  import { PocpGetters } from "pocp-service-sdk"
@@ -74,8 +83,8 @@ This getter function takes the community Id as parameters and returns the list o
        "1" // community id * required
  )
 ```
-### 5. Get all claimed POCP badges for a community
-This getter function takes the community Id as parameters and returns the list of claimed tokens for the Dao
+### 2. Get all claimed badges for a community
+The `getClaimedBadges` getter function takes the community ID as a parameter, and returns the list of claimed tokens for the DAO.
 
 ```javascript
 
@@ -83,8 +92,8 @@ This getter function takes the community Id as parameters and returns the list o
        "1" // community id * required
  )
 ```
-### 6. Get all claimed POCP badges for a contributor to a community
-This getter function takes the community Id and address as parameters and returns the list of claimed tokens for the contributor of a Dao
+### 3. Get all claimed POCP badges for a contributor to a community
+The `getClaimedBadgesOfClaimers` getter function takes the community ID and claimer's address as parameters, and returns the list of claimed tokens for that specific contributor of the DAO.
 
 ```javascript
 
@@ -93,8 +102,8 @@ This getter function takes the community Id and address as parameters and return
        "0x0EB...4b53"
  )
 ```
-### 7. Get all unclaimed POCP badges for a community
-This getter function takes the community Id as parameters and returns the list of unclaimed tokens for the Dao
+### 4. Get all unclaimed badges for a community
+The `getUnclaimedBadges` getter function takes the community ID as a parameter, and returns the list of unclaimed tokens for the DAO. 
 
 ```javascript
 
@@ -103,8 +112,8 @@ This getter function takes the community Id as parameters and returns the list o
  )
 ```
 
-### 7. Get  POCP community id from transaction hash
-This getter function takes the transaction hash as parameters and returns the community details associated with the hash
+### 5. Get community ID from transaction hash
+The `getCommunityIdOfHash` getter function takes the transaction hash as a parameter, and returns the community details associated with the hash.
 
 ```javascript
 
@@ -112,7 +121,6 @@ This getter function takes the transaction hash as parameters and returns the co
        "0xxsde...234" // transaction hash * required
  )
 ```
-
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
