@@ -1,8 +1,14 @@
 import { ethers } from 'ethers';
 
+// export enum EventsEnum {
+//   Register = 'CommunityRegistered',
+//   Approve = 'ApprovedBadge',
+//   Claim = 'ClaimedBadge',
+// }
+
 export enum EventsEnum {
-  Register = 'CommunityRegistered',
-  Approve = 'ApprovedBadge',
+  DaoContractDeployed = 'ProxyDeployed',
+  MembershipClaimed = 'Claimed',
   Claim = 'ClaimedBadge',
 }
 

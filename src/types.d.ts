@@ -1,13 +1,14 @@
 import { ethers } from 'ethers';
 
 export interface IContractAddress {
-  pocp: string;
-  forwarder: string;
+  pocpManger: string;
+  pocpBeacon: string;
 }
 
 export interface IContractAbi {
-  pocp: ethers.ContractInterface | string;
-  forwarder: ethers.ContractInterface | string;
+  pocpManger: ethers.ContractInterface | string;
+  pocpBeacon: ethers.ContractInterface | string;
+  pocpProxy: ethers.ContractInterface | string;
 }
 
 export interface IContractFactory {
@@ -17,8 +18,8 @@ export interface IContractFactory {
 }
 
 export interface IContract {
-  pocp: ethers.Contract | undefined;
-  forwarder: ethers.Contract | undefined;
+  pocpManager: ethers.Contract | undefined;
+  pocpBeacon: ethers.Contract | undefined;
 }
 
 export interface RegisterDaoResponse {
