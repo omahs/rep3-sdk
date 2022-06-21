@@ -388,7 +388,11 @@ class Pocp {
         console.log(receipt.transactionHash, confirmationNumber);
         if (callbackFunction) {
           console.log('hash tx....', receipt);
-          callbackFunction(receipt);
+          try {
+            await callbackFunction(receipt);
+          } catch (error) {
+            throw error;
+          }
         }
       });
     } else {
