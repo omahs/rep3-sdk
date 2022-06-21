@@ -164,12 +164,12 @@ class PocpGetters {
     }
   };
 
-  getMembershipNftsForHash = async (txhash: string) => {
+  getMembershipNftsForHash = async (tx_hash: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
         membershipNFTsWithHash,
         {
-          txhash,
+          tx_hash,
         },
         this.network
       );

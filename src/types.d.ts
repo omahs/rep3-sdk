@@ -1,4 +1,6 @@
 import { ethers } from 'ethers';
+import Web3 from 'web3';
+const web3 = new Web3();
 
 export interface IContractAddress {
   pocpManger: string;
@@ -20,7 +22,7 @@ export interface IContractFactory {
 }
 
 export interface IContract {
-  pocpManager: ethers.Contract | undefined;
+  pocpManager: web3.eth.Contract | undefined;
   pocpBeacon: ethers.Contract | undefined;
 }
 

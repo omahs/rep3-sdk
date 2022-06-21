@@ -386,7 +386,10 @@ class Pocp {
       }).once('confirmation', async (confirmationNumber: any, receipt: any) => {
         console.log(receipt);
         console.log(receipt.transactionHash, confirmationNumber);
-        return receipt;
+        if (callbackFunction) {
+          console.log('hash tx....', receipt);
+          callbackFunction(receipt);
+        }
       });
     } else {
       //performs direct contract call if no config file is set
