@@ -3,12 +3,14 @@ import { ethers } from 'ethers';
 export interface IContractAddress {
   pocpManger: string;
   pocpBeacon: string;
+  pocpRouter: string;
 }
 
 export interface IContractAbi {
-  pocpManger: ethers.ContractInterface | string;
-  pocpBeacon: ethers.ContractInterface | string;
-  pocpProxy: ethers.ContractInterface | string;
+  pocpManger: ethers.ContractInterface | string | any;
+  pocpBeacon: ethers.ContractInterface | string | any;
+  pocpProxy: ethers.ContractInterface | string | any;
+  pocpRouter: ethers.ContractInterface | string | any;
 }
 
 export interface IContractFactory {
@@ -32,8 +34,8 @@ export interface RelayRequestResponse {
 }
 
 export interface IPocpConfig {
-  relayer_token?: string;
-  url: string;
+  biconomyInstance?: any;
+  relayNetwork: number;
 }
 
 export interface relayerData {

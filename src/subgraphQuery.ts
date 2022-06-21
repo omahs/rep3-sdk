@@ -60,3 +60,29 @@ communities ( where:{txhash:$txhash}){
   }
 }
 `;
+
+export const membershipNFTs = `
+query($claimer: String) {
+  membershipNfts ( where:{claimer:$claimer}){
+    id
+    claimer
+    level
+    category
+    ipfsMetaUri
+    tx_hash
+  }
+}
+`;
+
+export const membershipNFTsWithHash = `
+query($tx_hash: String) {
+  membershipNfts ( where:{tx_hash:$tx_hash}){
+    id
+    claimer
+    level
+    category
+    ipfsMetaUri
+    tx_hash
+  }
+}
+`;

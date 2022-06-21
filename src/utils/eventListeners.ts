@@ -1,15 +1,10 @@
 import { ethers } from 'ethers';
 
-// export enum EventsEnum {
-//   Register = 'CommunityRegistered',
-//   Approve = 'ApprovedBadge',
-//   Claim = 'ClaimedBadge',
-// }
-
 export enum EventsEnum {
   DaoContractDeployed = 'ProxyDeployed',
   MembershipClaimed = 'Claimed',
-  Claim = 'ClaimedBadge',
+  IssueBadge = 'Issue',
+  FunctionRouted = 'FunctionRouted',
 }
 
 export const eventListener = async (

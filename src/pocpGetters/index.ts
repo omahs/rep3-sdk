@@ -4,6 +4,8 @@ import {
   claimedTokenQuery,
   approveTokenQuery,
   communityWithTxHash,
+  membershipNFTs,
+  membershipNFTsWithHash,
 } from '../subgraphQuery';
 
 class PocpGetters {
@@ -130,6 +132,42 @@ class PocpGetters {
     try {
       const communityDetail = await subgraphGetterFunction(
         communityWithTxHash,
+        {
+          txhash,
+        },
+        this.network
+      );
+      return communityDetail;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  /*
+   * @param tx hash
+   * @returns Community Info
+   * @throws "Error"
+   */
+
+  getMembershipNfts = async (claimer: string) => {
+    try {
+      const communityDetail = await subgraphGetterFunction(
+        membershipNFTs,
+        {
+          claimer,
+        },
+        this.network
+      );
+      return communityDetail;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  getMembershipNftsForHash = async (txhash: string) => {
+    try {
+      const communityDetail = await subgraphGetterFunction(
+        membershipNFTsWithHash,
         {
           txhash,
         },
