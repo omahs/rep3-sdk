@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { ethers } from 'ethers';
 import { relayerRequestData, RelayRequestResponse } from '../types';
 
 export enum RelayMethodFunctionCall {
@@ -10,24 +9,6 @@ export enum RelayMethodFunctionCall {
   BURN,
   APPROVE,
 }
-
-export const getSignatureParameters = (signature: string) => {
-  if (!ethers.utils.isHexString(signature)) {
-    throw new Error(
-      'Given value "'.concat(signature, '" is not a valid hex string.')
-    );
-  }
-  var r = signature.slice(0, 66);
-  var s = '0x'.concat(signature.slice(66, 130));
-  var v: any = '0x'.concat(signature.slice(130, 132));
-  v = ethers.BigNumber.from(v).toNumber();
-  if (![27, 28].includes(v)) v += 27;
-  return {
-    r: r,
-    s: s,
-    v: v,
-  };
-};
 
 export const relayerServerCall = async (
   relayerUrl: string,

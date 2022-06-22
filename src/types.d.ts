@@ -1,7 +1,3 @@
-import { ethers } from 'ethers';
-import Web3 from 'web3';
-const web3 = new Web3();
-
 export interface IContractAddress {
   pocpManger: string;
   pocpBeacon: string;
@@ -9,10 +5,10 @@ export interface IContractAddress {
 }
 
 export interface IContractAbi {
-  pocpManger: ethers.ContractInterface | string | any;
-  pocpBeacon: ethers.ContractInterface | string | any;
-  pocpProxy: ethers.ContractInterface | string | any;
-  pocpRouter: ethers.ContractInterface | string | any;
+  pocpManger: string | any;
+  pocpBeacon: string | any;
+  pocpProxy: string | any;
+  pocpRouter: string | any;
 }
 
 export interface IContractFactory {
@@ -22,12 +18,12 @@ export interface IContractFactory {
 }
 
 export interface IContract {
-  pocpManager: web3.eth.Contract | undefined;
-  pocpBeacon: ethers.Contract | undefined;
+  pocpManager: any | undefined;
+  pocpBeacon: any | undefined;
 }
 
 export interface RegisterDaoResponse {
-  transactionReceipt: ethers.Transaction;
+  transactionReceipt: any;
   communityId: number;
 }
 

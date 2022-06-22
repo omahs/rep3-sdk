@@ -1,5 +1,3 @@
-import { ethers } from 'ethers';
-
 export enum EventsEnum {
   DaoContractDeployed = 'ProxyDeployed',
   MembershipClaimed = 'Claimed',
@@ -8,12 +6,12 @@ export enum EventsEnum {
 }
 
 export const eventListener = async (
-  contractInstance: ethers.Contract | undefined,
+  contractInstance: any,
   eventType: EventsEnum,
   callbackFunction: Function,
   txHash: string
 ) => {
-  contractInstance?.on(eventType, async (...args) => {
+  contractInstance?.on(eventType, async (...args: any[]) => {
     if (args[args.length - 1].transactionHash === txHash) {
       try {
         await callbackFunction(args);

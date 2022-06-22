@@ -16,11 +16,10 @@ export const deployed_address_polygon = {
 };
 
 export const BASE_URL = {
-  //relayer: 'https://staging.api.drepute.xyz:5001/eth/relay',
   subgraph_mainnet:
     'https://api.thegraph.com/subgraphs/id/QmdfbRhc2m33fJWXhwcwBNxSBjWqoCFNMkxzEh97n5ws9d',
   subgraph:
-    'https://api.thegraph.com/subgraphs/id/QmSYw1CPbgwJLoCBuAioAqE7Jo55GFwyCvu6WoTcVTZPgn',
+    'https://api.thegraph.com/subgraphs/id/QmZaiDkZBjVn7AiA5Xnm5VWzvG8irDDqN1g8hqqM5TwGFp',
 };
 
 export const SIGNING_DOMAIN_NAME = 'REP3Signer';

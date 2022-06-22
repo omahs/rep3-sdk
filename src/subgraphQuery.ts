@@ -1,88 +1,38 @@
-export const claimedTokenQuery_claimer = `
-query($communityId: String, $claimerAddress:String) {
-    pocpTokens( where:{community:$communityId,claimer:$claimerAddress}) {
-      id
-    community {
-      id
-      name
-      txSigner
-      txhash
-    }
-      ipfsMetaUri
-      claimer
-      approver    
-    }
-  }
-`;
-
-export const claimedTokenQuery = `
-query($communityId: String) {
-    pocpTokens( where:{community:$communityId}) {
-      id
-    community {
-      id
-      name
-      txSigner
-      txhash
-    }
-      ipfsMetaUri
-      claimer
-      approver    
-    }
-  }
-`;
-
-export const approveTokenQuery = `
-query($communityId: String) {
-    approvedTokens( where:{community:$communityId}) {
-        id
-        community {
-          id
-          name
-          txSigner
-          txhash
-        }
-        identifier 
-    }
-}
-`;
-
-export const communityWithTxHash = `
-query($txhash: String) {
-communities ( where:{txhash:$txhash}){
+export const daoWithTxHash = `
+query($txHash: String) {
+  daos(where:{claimer:$claimer,contractAddress:$contractAddress}) {
     id
     name
-    approver{
-      id
-    }
-    txSigner
-    txhash
+    symbol
+    totalSupply
+    txHash
   }
-}
 `;
 
 export const membershipNFTs = `
-query($claimer: String) {
-  membershipNfts ( where:{claimer:$claimer}){
+query($claimer: String,$contractAddress:String ) {
+  membershipNFTs ( where:{claimer:$claimer,contractAddress:$contractAddress}){
     id
     claimer
     level
     category
-    ipfsMetaUri
-    tx_hash
+    metadatUri
+    contractAddress {
+      id
+    }
   }
 }
 `;
 
 export const membershipNFTsWithHash = `
-query($tx_hash: String) {
-  membershipNfts ( where:{tx_hash:$tx_hash}){
+query($id: String) {
+  membershipNFTs(where:{id:$id}) {
     id
-    claimer
+    tokenID
+    metadatUri
     level
     category
-    ipfsMetaUri
-    tx_hash
+    claimer
   }
 }
 `;

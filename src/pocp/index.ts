@@ -1,10 +1,4 @@
-// import {
-//   // networks_ENUM,
-//   SIGNING_DOMAIN_NAME,
-//   SIGNING_DOMAIN_VERSION,
-// } from '../constants';
 import ContractFactory from '../contracts';
-import { ethers } from 'ethers';
 import {
   IContract,
   IContractAbi,
@@ -18,8 +12,8 @@ import Web3 from 'web3';
 import { createVoucher } from '../utils/voucherCreater';
 
 class Pocp {
-  signer!: ethers.Signer | any;
-  provider!: ethers.providers.Provider | any;
+  signer!: any;
+  provider!: any;
   signerAddress!: string;
   config!: IPocpConfig;
   ContractAbi!: IContractAbi;
@@ -27,20 +21,22 @@ class Pocp {
   chainId: any;
   PocpInstance!: IContract;
   contractInfo!: IContractFactory;
-  ProxyContractInstance!: ethers.Contract;
+  ProxyContractInstance!: any;
   biconomyInstance: any;
   networkWeb3: any;
   walletWeb3: any;
 
   constructor(
-    getSigner: ethers.Signer,
-    getProvider: ethers.providers.Provider,
+    getSigner: any,
+    getProvider: any,
     walletProvider: any,
+    chainId: any,
     config: IPocpConfig | undefined
   ) {
     this.signer = getSigner;
     this.provider = getProvider;
-
+    this.walletWeb3 = new Web3(walletProvider);
+    this.chainId = chainId;
     if (config) {
       this.config = config;
       this.biconomyInstance = new this.config.biconomyInstance(
@@ -52,7 +48,6 @@ class Pocp {
         }
       );
       this.networkWeb3 = new Web3(this.biconomyInstance);
-      this.walletWeb3 = new Web3(walletProvider);
     }
   }
 
@@ -63,7 +58,7 @@ class Pocp {
    */
 
   createInstance = async () => {
-    this.chainId = await this.signer.getChainId();
+    // this.chainId = await this.signer.getChainId();
     this.contractInfo = new ContractFactory(80001);
     this.ContractAbi = this.contractInfo.getAbi();
     this.ContractAddress = this.contractInfo.getAddress();
@@ -77,11 +72,7 @@ class Pocp {
           // Initialize your contracts here using biconomy's provider instance
           // Initialize dapp here like getting user accounts etc
           // Initializing manager contract
-          console.log(
-            'Manager Deployed',
-            this.ContractAddress?.pocpManger,
-            this.ContractAbi?.pocpManger
-          );
+
           this.PocpInstance = {
             pocpManager: new this.networkWeb3.eth.Contract(
               this.ContractAbi?.pocpManger,
@@ -89,10 +80,8 @@ class Pocp {
             ),
             pocpBeacon: undefined,
           };
-          console.log('Manager Contract', this.PocpInstance?.pocpManager);
         })
         .onEvent(this.biconomyInstance.ERROR, (error: any, message: any) => {
-          // Handle error while initializing mexa
           throw {
             error,
             message,
@@ -102,46 +91,20 @@ class Pocp {
       return Pocp;
     } else {
       this.PocpInstance = {
-        pocpManager: new ethers.Contract(
-          this.ContractAddress?.pocpManger,
+        pocpManager: new this.walletWeb3.eth.Contract(
           this.ContractAbi?.pocpManger,
-          this.signer
+          this.ContractAddress?.pocpManger
         ),
-        pocpBeacon: new ethers.Contract(
-          this.ContractAddress?.pocpBeacon,
-          this.ContractAbi?.pocpBeacon,
-          this.signer
-        ),
+        pocpBeacon: undefined,
+        // pocpBeacon: new this.walletWeb3.Contract(
+        //   this.ContractAddress?.pocpBeacon,
+        //   this.ContractAbi?.pocpBeacon,
+        //   this.signer
+        // ),
       };
 
       return Pocp;
     }
-
-    // Polygon Mainnet network config
-    // else if (this.chainId === networks_ENUM.POLYGON) {
-    //   this.PocpInstance = {
-    //     pocp: new ethers.Contract(
-    //       this.ContractAddress?.pocp,
-    //       this.ContractAbi?.pocp,
-    //       this.signer
-    //     ),
-    //     forwarder: new ethers.Contract(
-    //       this.ContractAddress?.forwarder,
-    //       this.ContractAbi?.forwarder,
-    //       this.signer
-    //     ),
-    //   };
-    //   return Pocp;
-    // }
-    // else {
-    //   this.PocpInstance = {
-    //     pocpManager: undefined,
-    //     pocpBeacon: undefined,
-    //   };
-    //   throw {
-    //     errorMessage: `Pocp V1 is currently in polygon  and not in other networks yet !`,
-    //   };
-    // }
   };
 
   /*
@@ -182,18 +145,13 @@ class Pocp {
         version: '1',
         verifyingContract: this.ContractAddress.pocpManger,
         // converts Number to bytes32. Use your own chainId instead of 42 for other networks
-        salt: ethers.utils.hexZeroPad(
-          ethers.BigNumber.from(80001).toHexString(),
-          32
-        ),
+        salt: '0x' + (80001).toString(16).padStart(64, '0'),
       };
-
-      console.log('signer address', this.signerAddress);
 
       const nonce: any = await this.PocpInstance?.pocpManager?.methods
         .getNonce(this.signerAddress)
         .call();
-      console.log('nounce=====', nonce.toString());
+
       let functionSignature = this.PocpInstance?.pocpManager?.methods
         .deployREP3TokenProxy(
           daoName,
@@ -230,8 +188,6 @@ class Pocp {
           if (err) {
             return console.error(err);
           }
-          console.log('Signature result from wallet :');
-          console.log(result);
           if (result && result.result) {
             const signature = result.result.substring(2);
             const r = '0x' + signature.substring(0, 64);
@@ -253,21 +209,22 @@ class Pocp {
                 from: this.signerAddress,
               });
             promiEvent
-              .on('transactionHash', (hash: any) => {
-                console.log(
-                  'Transaction sent successfully. Check console for Transaction hash'
-                );
-                console.log('Transaction Hash is ', hash);
-              })
+              // .on('transactionHash', (hash: any) => {})
               .once(
                 'confirmation',
-                (_confirmationNumber: any, receipt: any) => {
+                async (_confirmationNumber: any, receipt: any) => {
                   if (receipt.status) {
                     console.log('Transaction processed successfully');
+                    if (callbackFunction) {
+                      try {
+                        await callbackFunction(receipt);
+                      } catch (error) {
+                        throw error;
+                      }
+                    }
                   } else {
                     console.log('Transaction failed');
                   }
-                  console.log(receipt);
                 }
               );
           } else {
@@ -398,10 +355,9 @@ class Pocp {
     } else {
       //performs direct contract call if no config file is set
       try {
-        this.ProxyContractInstance = new ethers.Contract(
-          contractAddress,
+        this.ProxyContractInstance = new this.walletWeb3.eth.Contract(
           this.ContractAbi?.pocpProxy,
-          this.signer
+          contractAddress
         );
         const res = await (
           await this.ProxyContractInstance?.claimMembership(
@@ -428,165 +384,36 @@ class Pocp {
     }
   };
 
-  issueBadge = async (
-    contractAddress: string,
-    memberTokenId: number,
-    typeOfToken: number,
-    data: string,
-    tokenUri: string,
-    callbackFunction?: Function
-  ) => {
-    if (this.config) {
-    } else {
-      //performs direct contract call if no config file is set
-      try {
-        this.ProxyContractInstance = new ethers.Contract(
-          contractAddress,
-          this.ContractAbi?.pocpProxy,
-          this.signer
-        );
-        const res = await (
-          await this.ProxyContractInstance?.issueBadge(
-            memberTokenId,
-            typeOfToken,
-            data,
-            tokenUri
-          )
-        ).wait();
-        if (callbackFunction) {
-          try {
-            await eventListener(
-              this.PocpInstance.pocpManager,
-              EventsEnum.MembershipClaimed,
-              callbackFunction,
-              res.transactionHash
-            );
-          } catch (error) {
-            throw error;
-          }
-        }
-        return res;
-      } catch (error) {
-        throw error;
-      }
-    }
-  };
-
-  soulTransfer = async (
-    contractAddress: string,
-    voucher: any
-    // callbackFunction?: Function
-  ) => {
-    if (this.config) {
-    } else {
-      //performs direct contract call if no config file is set
-      try {
-        this.ProxyContractInstance = new ethers.Contract(
-          contractAddress,
-          this.ContractAbi?.pocpProxy,
-          this.signer
-        );
-        const res = await (
-          await this.ProxyContractInstance?.soulTransfer(voucher)
-        ).wait();
-        // @dev figure out to listen the event at last of transfer
-        // if (callbackFunction) {
-        //   try {
-        //     await eventListener(
-        //       this.PocpInstance.pocpManager,
-        //       EventsEnum.MembershipClaimed,
-        //       callbackFunction,
-        //       res.transactionHash
-        //     );
-        //   } catch (error) {
-        //     throw error;
-        //   }
-        // }
-        return res;
-      } catch (error) {
-        throw error;
-      }
-    }
-  };
-
-  /*
-   * @param community id in number
-   * @param array of claimers wallet address
-   * @param array of ipfs badge url
-   * @param array of identifiers
-   * @returns The transaction receipt is contract call success
-   * @throws "Contract call fails"
-   * @throws "Metamask errors"
-   * @throws "Relayer Api Call errors"
-   */
-
-  // approveBadgeToContributor = async (
-  //   communityId?: number,
-  //   claimerAddresses?: [string],
-  //   ipfsUrls?: [string],
-  //   arrayOfIdentifiers?: [string],
+  // issueBadge = async (
+  //   contractAddress: string,
+  //   memberTokenId: number,
+  //   typeOfToken: number,
+  //   data: string,
+  //   tokenUri: string,
   //   callbackFunction?: Function
   // ) => {
   //   if (this.config) {
-  //     if (typeof this.config.relayer_token === 'string') {
-  //       try {
-  //         const signedMessage = await signedTypedData(
-  //           this.signer,
-  //           this.signerAddress,
-  //           this.PocpInstance,
-  //           this.ContractAddress,
-  //           { communityId, claimerAddresses, ipfsUrls, arrayOfIdentifiers },
-  //           this.chainId,
-  //           SignMethodFunctionCall.ApproveBadge
-  //         );
-  //         if (signedMessage.signature) {
-  //           const transactionHash = await relayerServerCall(
-  //             this.config.url,
-  //             this.config.relayer_token,
-  //             RelayMethodFunctionCall.APPROVE,
-  //             signedMessage.data,
-  //             signedMessage.signature,
-  //             this.chainId
-  //           );
-  //           const transactionReceipt = await this.provider.getTransaction(
-  //             transactionHash.transactionHash
-  //           );
-  //           if (callbackFunction) {
-  //             try {
-  //               await eventListener(
-  //                 this.PocpInstance.pocp,
-  //                 EventsEnum.Approve,
-  //                 callbackFunction,
-  //                 transactionHash.transactionHash
-  //               );
-  //             } catch (error) {
-  //               throw error;
-  //             }
-  //           }
-
-  //           return transactionReceipt;
-  //         }
-  //       } catch (error) {
-  //         throw error;
-  //       }
-  //     } else {
-  //       throw 'Relayer token is not a string';
-  //     }
   //   } else {
+  //     //performs direct contract call if no config file is set
   //     try {
+  //       this.ProxyContractInstance = new ethers.Contract(
+  //         contractAddress,
+  //         this.ContractAbi?.pocpProxy,
+  //         this.signer
+  //       );
   //       const res = await (
-  //         await this.PocpInstance.pocp?.approveBadge(
-  //           communityId,
-  //           claimerAddresses,
-  //           ipfsUrls,
-  //           arrayOfIdentifiers
+  //         await this.ProxyContractInstance?.issueBadge(
+  //           memberTokenId,
+  //           typeOfToken,
+  //           data,
+  //           tokenUri
   //         )
   //       ).wait();
   //       if (callbackFunction) {
   //         try {
   //           await eventListener(
-  //             this.PocpInstance.pocp,
-  //             EventsEnum.Approve,
+  //             this.PocpInstance.pocpManager,
+  //             EventsEnum.MembershipClaimed,
   //             callbackFunction,
   //             res.transactionHash
   //           );
@@ -601,79 +428,23 @@ class Pocp {
   //   }
   // };
 
-  /*
-   * @param array of token ids
-   * @returns The transaction receipt is contract call success
-   * @throws "Contract call fails"
-   * @throws "Metamask errors"
-   * @throws "Relayer Api Call errors"
-   */
-
-  // claimBadgesByClaimers = async (
-  //   tokenIds?: [number],
-  //   callbackFunction?: Function
+  // soulTransfer = async (
+  //   contractAddress: string,
+  //   voucher: any
+  //   // callbackFunction?: Function
   // ) => {
   //   if (this.config) {
-  //     if (typeof this.config.relayer_token === 'string') {
-  //       try {
-  //         const signedMessage = await signedTypedData(
-  //           this.signer,
-  //           this.signerAddress,
-  //           this.PocpInstance,
-  //           this.ContractAddress,
-  //           { tokenIds },
-  //           this.chainId,
-  //           SignMethodFunctionCall.ClaimBadge
-  //         );
-  //         if (signedMessage.signature) {
-  //           const transactionHash = await relayerServerCall(
-  //             this.config.url,
-  //             this.config.relayer_token,
-  //             RelayMethodFunctionCall.CLAIM,
-  //             signedMessage.data,
-  //             signedMessage.signature,
-  //             this.chainId
-  //           );
-  //           const transactionReceipt = await this.provider.getTransaction(
-  //             transactionHash.transactionHash
-  //           );
-  //           if (callbackFunction) {
-  //             try {
-  //               await eventListener(
-  //                 this.PocpInstance.pocp,
-  //                 EventsEnum.Claim,
-  //                 callbackFunction,
-  //                 transactionHash.transactionHash
-  //               );
-  //             } catch (error) {
-  //               throw error;
-  //             }
-  //           }
-  //           return transactionReceipt;
-  //         }
-  //       } catch (error) {
-  //         throw error;
-  //       }
-  //     } else {
-  //       throw 'Relayer token is not a string';
-  //     }
   //   } else {
+  //     //performs direct contract call if no config file is set
   //     try {
+  //       this.ProxyContractInstance = new ethers.Contract(
+  //         contractAddress,
+  //         this.ContractAbi?.pocpProxy,
+  //         this.signer
+  //       );
   //       const res = await (
-  //         await this.PocpInstance.pocp?.claim(tokenIds)
+  //         await this.ProxyContractInstance?.soulTransfer(voucher)
   //       ).wait();
-  //       if (callbackFunction) {
-  //         try {
-  //           await eventListener(
-  //             this.PocpInstance.pocp,
-  //             EventsEnum.Claim,
-  //             callbackFunction,
-  //             res.transactionHash
-  //           );
-  //         } catch (error) {
-  //           throw error;
-  //         }
-  //       }
   //       return res;
   //     } catch (error) {
   //       throw error;
