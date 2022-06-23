@@ -6,7 +6,6 @@ import {
   IContractFactory,
   IPocpConfig,
 } from '../types';
-
 import { eventListener, EventsEnum } from '../utils/eventListeners';
 import Web3 from 'web3';
 import { createVoucher } from '../utils/voucherCreater';

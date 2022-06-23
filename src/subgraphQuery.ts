@@ -9,7 +9,7 @@ query($txHash: String) {
   }
 `;
 
-export const membershipNFTs = `
+export const membershipNFTswitnClaimerofDao = `
 query($claimer: String,$contractAddress:String ) {
   membershipNFTs ( where:{claimer:$claimer,contractAddress:$contractAddress}){
     id
@@ -25,6 +25,19 @@ query($claimer: String,$contractAddress:String ) {
 `;
 
 export const membershipNFTsWithHash = `
+query($id: String) {
+  membershipNFTs(where:{id:$id}) {
+    id
+    tokenID
+    metadatUri
+    level
+    category
+    claimer
+  }
+}
+`;
+
+export const membershipNFTsForClaimer = `
 query($id: String) {
   membershipNFTs(where:{id:$id}) {
     id
