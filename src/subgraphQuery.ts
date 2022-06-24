@@ -9,43 +9,59 @@ query($txHash: String) {
   }
 `;
 
-export const membershipNFTswitnClaimerofDao = `
+export const membershipNFTsForClaimerOfDao = `
 query($claimer: String,$contractAddress:String ) {
-  membershipNFTs ( where:{claimer:$claimer,contractAddress:$contractAddress}){
+  membershipNFTs(where:{claimer:$claimer,contractAddress:$contractAddress}){
     id
-    claimer
+    metadataUri
     level
     category
-    metadatUri
-    contractAddress {
+    claimer
+    contractAddress{
       id
+      txHash
+      name
+      symbol
     }
+    tokenID
+  }
+}
+`;
+
+export const membershipNFTsForClaimer = `
+query($claimer: String) {
+  membershipNFTs(where:{claimer:$claimer}){
+    id
+    metadataUri
+    level
+    category
+    claimer
+    contractAddress{
+      id
+      txHash
+      name
+      symbol
+    }
+    tokenID
   }
 }
 `;
 
 export const membershipNFTsWithHash = `
 query($id: String) {
-  membershipNFTs(where:{id:$id}) {
+  membershipNFTs(where:{id:$id}){
     id
-    tokenID
-    metadatUri
+    metadataUri
     level
     category
     claimer
-  }
-}
-`;
-
-export const membershipNFTsForClaimer = `
-query($id: String) {
-  membershipNFTs(where:{id:$id}) {
-    id
+    contractAddress{
+      id
+      txHash
+      name
+      symbol
+    }
     tokenID
-    metadatUri
-    level
-    category
-    claimer
   }
 }
 `;

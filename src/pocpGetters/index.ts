@@ -1,7 +1,7 @@
 import { subgraphGetterFunction } from '../utils/subgraphGetters';
 import {
   daoWithTxHash,
-  membershipNFTswitnClaimerofDao,
+  membershipNFTsForClaimerOfDao,
   membershipNFTsWithHash,
 } from '../subgraphQuery';
 
@@ -31,13 +31,13 @@ class PocpGetters {
     }
   };
 
-  membershipNFTswitnClaimerofDao = async (
+  membershipNftWithClaimerOfDao = async (
     claimer: string,
     contractAddress: string
   ) => {
     try {
       const communityDetail = await subgraphGetterFunction(
-        membershipNFTswitnClaimerofDao,
+        membershipNFTsForClaimerOfDao,
         {
           claimer,
           contractAddress,
@@ -50,12 +50,12 @@ class PocpGetters {
     }
   };
 
-  getMembershipNftsForHash = async (tx_hash: string) => {
+  getMembershipNftsForHash = async (id: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
         membershipNFTsWithHash,
         {
-          tx_hash,
+          id,
         },
         this.network
       );

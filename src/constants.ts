@@ -19,7 +19,7 @@ export const BASE_URL = {
   subgraph_mainnet:
     'https://api.thegraph.com/subgraphs/id/QmdfbRhc2m33fJWXhwcwBNxSBjWqoCFNMkxzEh97n5ws9d',
   subgraph:
-    'https://api.thegraph.com/subgraphs/id/QmZaiDkZBjVn7AiA5Xnm5VWzvG8irDDqN1g8hqqM5TwGFp',
+    'https://api.thegraph.com/subgraphs/id/QmaZWBc4i1rfs8oTpZA9JGp91YLi5F2HeFfLiXZWoxPzqJ',
 };
 
 export const SIGNING_DOMAIN_NAME = 'REP3Signer';
