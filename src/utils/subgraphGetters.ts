@@ -17,6 +17,7 @@ export const subgraphGetterFunction = async (
   variables: any,
   network: number
 ): Promise<any> => {
+  console.log(getSubgraphUrl(network));
   try {
     const client = createClient({
       url: getSubgraphUrl(network),

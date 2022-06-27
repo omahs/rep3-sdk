@@ -29,7 +29,7 @@ class ContractManager {
         return {
           pocpManger: deployed_address_polygon.POCP_Manager,
           pocpBeacon: deployed_address_polygon.POCP_Beacon,
-          pocpRouter: deployed_address.POCP_Router,
+          pocpRouter: deployed_address_polygon.POCP_Router,
         };
       default:
         return {
@@ -58,9 +58,10 @@ class ContractManager {
         };
       default:
         return {
-          pocpManger: 'not_deployed',
-          pocpBeacon: 'not_deployed',
-          pocpRouter: 'not_deployed',
+          pocpManger: pocpMangerAbi.abi,
+          pocpBeacon: pocpBeaconAbi.abi,
+          pocpProxy: pocpProxyAbi.abi,
+          pocpRouter: pocpRouterAbi.abi,
         };
     }
   };

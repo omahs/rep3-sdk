@@ -1,4 +1,15 @@
-function generateLevelCategory(levels: [number], categories: [number]) {
+// function generateLevelCategory(levels: [number], categories: [number]) {
+//   let levelCategoryArray = [];
+//   for (let i = 0; i < levels.length; i++) {
+//     const levelCategory = (levels[i] << 8) | categories[i];
+//     levelCategoryArray.push(levelCategory);
+//   }
+//   return levelCategoryArray;
+// }
+function generateData(levels: string | any[], categories: string | any[]) {
+  if (levels.length != categories.length) {
+    return [];
+  }
   let levelCategoryArray = [];
   for (let i = 0; i < levels.length; i++) {
     const levelCategory = (levels[i] << 8) | categories[i];
@@ -14,7 +25,7 @@ export const createVoucher = (
   to: [string],
   tokenUris: string
 ) => {
-  const levelCategory = generateLevelCategory(levels, categories);
-  const voucher = { levelCategory, end, to, tokenUris };
+  const data = generateData(levels, categories);
+  const voucher = { data, end, to, tokenUris };
   return voucher;
 };

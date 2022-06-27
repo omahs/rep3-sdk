@@ -39,10 +39,17 @@ class Pocp {
     if (config) {
       this.config = config;
       this.biconomyInstance = new this.config.biconomyInstance(
-        new Web3.providers.HttpProvider('https://rpc-mumbai.maticvigil.com'),
+        new Web3.providers.HttpProvider(
+          this.chainId === 80001
+            ? 'https://rpc-mumbai.maticvigil.com'
+            : 'https://polygon-rpc.com'
+        ),
         {
           walletProvider,
-          apiKey: 'h3GRiJo5V.ea5e72c1-a3dd-44cf-824e-1bd77a681ff7',
+          apiKey:
+            this.chainId === 80001
+              ? 'h3GRiJo5V.ea5e72c1-a3dd-44cf-824e-1bd77a681ff7'
+              : 'a1SusDqqY.24edf34d-6125-4026-af88-b156a96b7f85',
           debug: true,
         }
       );
@@ -58,11 +65,12 @@ class Pocp {
 
   createInstance = async () => {
     // this.chainId = await this.signer.getChainId();
-    this.contractInfo = new ContractFactory(80001);
+    console.log(this.chainId);
+    this.contractInfo = new ContractFactory(this.chainId);
     this.ContractAbi = this.contractInfo.getAbi();
     this.ContractAddress = this.contractInfo.getAddress();
     this.signerAddress = await this.signer.getAddress();
-
+    console.log(this.ContractAddress);
     // Polygon Mumbai network config
     // if (this.chainId === networks_ENUM.MUMBAI) {
     if (this.config) {
@@ -144,7 +152,7 @@ class Pocp {
         version: '1',
         verifyingContract: this.ContractAddress.pocpManger,
         // converts Number to bytes32. Use your own chainId instead of 42 for other networks
-        salt: '0x' + (80001).toString(16).padStart(64, '0'),
+        salt: '0x' + this.chainId.toString(16).padStart(64, '0'),
       };
 
       const nonce: any = await this.PocpInstance?.pocpManager?.methods
@@ -276,13 +284,13 @@ class Pocp {
       name: 'REP3Signer',
       version: '0.0.1',
       verifyingContract: proxyAddress, //contract address
-      salt: '0x' + (80001).toString(16).padStart(64, '0'), //For mainnet replace 80001 with 137
+      salt: '0x' + this.chainId.toString(16).padStart(64, '0'), //For mainnet replace 80001 with 137
     };
 
     // types is the types
     const types = {
       NFTVoucher: [
-        { name: 'levelCategory', type: 'uint16[]' },
+        { name: 'data', type: 'uint256[]' },
         { name: 'end', type: 'uint8[]' },
         { name: 'to', type: 'address[]' },
         { name: 'tokenUris', type: 'string' },
@@ -290,12 +298,6 @@ class Pocp {
     };
     const voucher = createVoucher(levels, categories, end, to, tokenUris);
     const signature = await this.signer._signTypedData(domain, types, voucher);
-    console.log(
-      JSON.stringify({
-        ...voucher,
-        signature,
-      })
-    );
     return {
       ...voucher,
       signature,
@@ -309,6 +311,7 @@ class Pocp {
     callbackFunction?: Function
   ) => {
     if (this.config) {
+      console.log(this.ContractAddress.pocpRouter);
       let contract = new this.networkWeb3.eth.Contract(
         this.ContractAbi.pocpRouter,
         this.ContractAddress.pocpRouter
@@ -322,35 +325,51 @@ class Pocp {
       );
 
       // //Call your target method (must be registered on the dashboard).. here we are calling setQuote() method of our contract
-      let tx = contract.methods
-        .routeRequest({
-          to: contractAddress,
-          gas: 1e6,
-          value: 0,
-          data: proxyContract.methods
-            .claimMembership(voucher, approvedAddressIndex)
-            .encodeABI(),
-        })
-        .send({
-          from: userAddress,
-          signatureType: this.biconomyInstance.EIP712_SIGN,
-          gasLimit: 1e6,
-        });
-
-      tx.on('transactionHash', function(hash: any) {
-        console.log(`Transaction hash is ${hash}`);
-      }).once('confirmation', async (confirmationNumber: any, receipt: any) => {
-        console.log(receipt);
-        console.log(receipt.transactionHash, confirmationNumber);
-        if (callbackFunction) {
-          console.log('hash tx....', receipt);
+      try {
+        let tx = contract.methods
+          .routeRequest({
+            to: contractAddress,
+            gas: 1e6,
+            value: 0,
+            data: proxyContract.methods
+              .claimMembership(voucher, approvedAddressIndex)
+              .encodeABI(),
+          })
+          .send({
+            from: userAddress,
+            signatureType: this.biconomyInstance.EIP712_SIGN,
+            gasLimit: 1e6,
+          });
+        tx.on('transactionHash', async function(hash: any) {
           try {
-            await callbackFunction(receipt);
+            console.log(`Transaction hash is ${hash}`);
           } catch (error) {
-            throw error;
+            console.log('yoyooyoy', error);
           }
-        }
-      });
+        }).once(
+          'confirmation',
+          async (confirmationNumber: any, receipt: any) => {
+            console.log(receipt);
+            console.log(receipt.transactionHash, confirmationNumber);
+            if (callbackFunction) {
+              console.log('hash tx....', receipt);
+              try {
+                await callbackFunction(receipt);
+              } catch (error) {
+                throw error;
+              }
+            }
+          }
+        );
+      } catch (error) {
+        console.log('Catched Error', error);
+      }
+
+      // .on('error', function(error: any) {
+      //   // Handle error
+      //   console.log('error', error);
+      //   throw error;
+      // });
     } else {
       //performs direct contract call if no config file is set
       try {
