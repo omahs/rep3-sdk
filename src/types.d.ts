@@ -33,7 +33,8 @@ export interface RelayRequestResponse {
 
 export interface IPocpConfig {
   biconomyInstance?: any;
-  relayNetwork: number;
+  apiKey: number;
+  relayURL: string;
 }
 
 export interface relayerData {

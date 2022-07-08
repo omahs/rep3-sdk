@@ -6,7 +6,10 @@
 //   }
 //   return levelCategoryArray;
 // }
-function generateData(levels: string | any[], categories: string | any[]) {
+export const generateData = (
+  levels: string | any[],
+  categories: string | any[]
+) => {
   if (levels.length != categories.length) {
     return [];
   }
@@ -16,16 +19,25 @@ function generateData(levels: string | any[], categories: string | any[]) {
     levelCategoryArray.push(levelCategory);
   }
   return levelCategoryArray;
-}
+};
 
 export const createVoucher = (
   levels: [number],
   categories: [number],
   end: any,
   to: [string],
-  tokenUris: string
+  tokenUris: string,
+  signType: string
 ) => {
-  const data = generateData(levels, categories);
-  const voucher = { data, end, to, tokenUris };
-  return voucher;
+  if (signType === 'signTypedDatav2.0') {
+    const data = generateData(levels, categories);
+    const voucher = { data, end, to, tokenUris };
+    return voucher;
+  } else if (signType === 'signTypedDatav1.0') {
+    const levelCategory = generateData(levels, categories);
+    const voucher = { levelCategory, end, to, tokenUris };
+    return voucher;
+  } else {
+    return false;
+  }
 };

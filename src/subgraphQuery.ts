@@ -1,12 +1,21 @@
+// export const daoWithTxHash = `
+// query($txHash:String) {
+//   daos(where:{txHash:$txHash}){
+//     id
+//     txHash
+//   }
+// `;
+
 export const daoWithTxHash = `
 query($txHash: String) {
-  daos(where:{claimer:$claimer,contractAddress:$contractAddress}) {
+  daos(where:{txHash:$txHash}){
     id
+    txHash
     name
     symbol
     totalSupply
-    txHash
   }
+}
 `;
 
 export const membershipNFTsForClaimerOfDao = `

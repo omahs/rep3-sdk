@@ -6,9 +6,9 @@ import {
 } from '../subgraphQuery';
 
 class PocpGetters {
-  network: number;
-  constructor(givenNetwork: number) {
-    this.network = givenNetwork;
+  subgraphUrl: string;
+  constructor(url: string) {
+    this.subgraphUrl = url;
   }
 
   /*
@@ -16,14 +16,14 @@ class PocpGetters {
    * @returns Array of tokens
    * @throws "Error"
    */
-  getdaoInfoForHash = async (tx_hash: string) => {
+  getdaoInfoForHash = async (txHash: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
         daoWithTxHash,
         {
-          tx_hash,
+          txHash,
         },
-        this.network
+        this.subgraphUrl
       );
       return communityDetail;
     } catch (error) {
@@ -42,7 +42,7 @@ class PocpGetters {
           claimer,
           contractAddress,
         },
-        this.network
+        this.subgraphUrl
       );
       return communityDetail;
     } catch (error) {
@@ -57,7 +57,7 @@ class PocpGetters {
         {
           id,
         },
-        this.network
+        this.subgraphUrl
       );
       return communityDetail;
     } catch (error) {
@@ -73,7 +73,7 @@ class PocpGetters {
       const approveToken = await subgraphGetterFunction(
         customQuery,
         variableObject && variableObject,
-        this.network
+        this.subgraphUrl
       );
 
       return approveToken;

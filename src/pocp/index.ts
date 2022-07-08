@@ -7,8 +7,9 @@ import {
   IPocpConfig,
 } from '../types';
 import { eventListener, EventsEnum } from '../utils/eventListeners';
+import PocpProxyV1 from '../contracts/abi/proxy/pocpProxyV1.json';
 import Web3 from 'web3';
-import { createVoucher } from '../utils/voucherCreater';
+import { createVoucher, generateData } from '../utils/voucherCreater';
 
 class Pocp {
   signer!: any;
@@ -30,26 +31,21 @@ class Pocp {
     getProvider: any,
     walletProvider: any,
     chainId: any,
+    contractAddressConfig: IContractAddress | any,
     config: IPocpConfig | undefined
   ) {
     this.signer = getSigner;
     this.provider = getProvider;
     this.walletWeb3 = new Web3(walletProvider);
     this.chainId = chainId;
+    this.ContractAddress = contractAddressConfig;
     if (config) {
       this.config = config;
       this.biconomyInstance = new this.config.biconomyInstance(
-        new Web3.providers.HttpProvider(
-          this.chainId === 80001
-            ? 'https://rpc-mumbai.maticvigil.com'
-            : 'https://polygon-rpc.com'
-        ),
+        new Web3.providers.HttpProvider(this.config.relayURL),
         {
           walletProvider,
-          apiKey:
-            this.chainId === 80001
-              ? 'h3GRiJo5V.ea5e72c1-a3dd-44cf-824e-1bd77a681ff7'
-              : 'a1SusDqqY.24edf34d-6125-4026-af88-b156a96b7f85',
+          apiKey: this.config.apiKey,
           debug: true,
         }
       );
@@ -64,22 +60,22 @@ class Pocp {
    */
 
   createInstance = async () => {
-    // this.chainId = await this.signer.getChainId();
-    console.log(this.chainId);
     this.contractInfo = new ContractFactory(this.chainId);
     this.ContractAbi = this.contractInfo.getAbi();
-    this.ContractAddress = this.contractInfo.getAddress();
+    // this.ContractAddress = this.contractInfo.getAddress();
     this.signerAddress = await this.signer.getAddress();
-    console.log(this.ContractAddress);
-    // Polygon Mumbai network config
-    // if (this.chainId === networks_ENUM.MUMBAI) {
+    console.log(
+      'Contracts and Signer Address',
+      this.signerAddress,
+      this.ContractAddress
+    );
+
     if (this.config) {
       this.biconomyInstance
         .onEvent(this.biconomyInstance.READY, async () => {
           // Initialize your contracts here using biconomy's provider instance
           // Initialize dapp here like getting user accounts etc
           // Initializing manager contract
-
           this.PocpInstance = {
             pocpManager: new this.networkWeb3.eth.Contract(
               this.ContractAbi?.pocpManger,
@@ -87,6 +83,7 @@ class Pocp {
             ),
             pocpBeacon: undefined,
           };
+          console.log('Manager Deployed!!!!');
         })
         .onEvent(this.biconomyInstance.ERROR, (error: any, message: any) => {
           throw {
@@ -103,11 +100,6 @@ class Pocp {
           this.ContractAddress?.pocpManger
         ),
         pocpBeacon: undefined,
-        // pocpBeacon: new this.walletWeb3.Contract(
-        //   this.ContractAddress?.pocpBeacon,
-        //   this.ContractAbi?.pocpBeacon,
-        //   this.signer
-        // ),
       };
 
       return Pocp;
@@ -129,6 +121,7 @@ class Pocp {
     approverAddresses: [string],
     upgradeableBeacon: string,
     _trustedForwarder: string,
+    transactionHashCallback: Function,
     callbackFunction?: Function
   ) => {
     //performs relay function if config file is set
@@ -146,12 +139,10 @@ class Pocp {
         { name: 'from', type: 'address' },
         { name: 'functionSignature', type: 'bytes' },
       ];
-      // replace the chainId 42 if network is not kovan
       let domainData = {
         name: 'Manager',
         version: '1',
         verifyingContract: this.ContractAddress.pocpManger,
-        // converts Number to bytes32. Use your own chainId instead of 42 for other networks
         salt: '0x' + this.chainId.toString(16).padStart(64, '0'),
       };
 
@@ -173,7 +164,7 @@ class Pocp {
       message.nonce = parseInt(nonce);
       message.from = this.signerAddress;
       message.functionSignature = functionSignature;
-      // //copy from this point on
+
       const dataToSign = JSON.stringify({
         types: {
           EIP712Domain: domainType,
@@ -200,9 +191,6 @@ class Pocp {
             const r = '0x' + signature.substring(0, 64);
             const s = '0x' + signature.substring(64, 128);
             const v = parseInt(signature.substring(128, 130), 16);
-            console.log(r, 'r');
-            console.log(s, 's');
-            console.log(v, 'v');
 
             const promiEvent: any = this.PocpInstance?.pocpManager?.methods
               .executeMetaTransaction(
@@ -216,7 +204,9 @@ class Pocp {
                 from: this.signerAddress,
               });
             promiEvent
-              // .on('transactionHash', (hash: any) => {})
+              .on('transactionHash', async (hash: any) => {
+                await transactionHashCallback(hash);
+              })
               .once(
                 'confirmation',
                 async (_confirmationNumber: any, receipt: any) => {
@@ -278,7 +268,8 @@ class Pocp {
     categories: [number],
     end: [number],
     to: [string],
-    tokenUris: string
+    tokenUris: string,
+    signType: string
   ) => {
     const domain = {
       name: 'REP3Signer',
@@ -286,9 +277,8 @@ class Pocp {
       verifyingContract: proxyAddress, //contract address
       salt: '0x' + this.chainId.toString(16).padStart(64, '0'), //For mainnet replace 80001 with 137
     };
-
     // types is the types
-    const types = {
+    const typesV2 = {
       NFTVoucher: [
         { name: 'data', type: 'uint256[]' },
         { name: 'end', type: 'uint8[]' },
@@ -296,8 +286,32 @@ class Pocp {
         { name: 'tokenUris', type: 'string' },
       ],
     };
-    const voucher = createVoucher(levels, categories, end, to, tokenUris);
-    const signature = await this.signer._signTypedData(domain, types, voucher);
+    const typesV1 = {
+      NFTVoucher: [
+        { name: 'levelCategory', type: 'uint16[]' },
+        { name: 'end', type: 'uint8[]' },
+        { name: 'to', type: 'address[]' },
+        { name: 'tokenUris', type: 'string' },
+      ],
+    };
+    console.log(
+      'signing type loaded',
+      signType,
+      signType === 'signTypedDatav2.0' ? typesV2 : typesV1
+    );
+    const voucher = createVoucher(
+      levels,
+      categories,
+      end,
+      to,
+      tokenUris,
+      signType
+    );
+    const signature = await this.signer._signTypedData(
+      domain,
+      signType === 'signTypedDatav2.0' ? typesV2 : typesV1,
+      voucher
+    );
     return {
       ...voucher,
       signature,
@@ -308,23 +322,35 @@ class Pocp {
     contractAddress: string,
     voucher: any,
     approvedAddressIndex: number,
+    signType: string,
+    transactionHashCallback: Function,
     callbackFunction?: Function
   ) => {
     if (this.config) {
-      console.log(this.ContractAddress.pocpRouter);
+      console.log(
+        'Loaded Config',
+        this.ContractAddress.pocpRouter,
+        signType === 'signTypedDatav2.0'
+          ? this.ContractAbi.pocpRouter
+          : PocpProxyV1
+      );
       let contract = new this.networkWeb3.eth.Contract(
+        // signType === 'signTypedDatav2.0'
+        //   ?
         this.ContractAbi.pocpRouter,
+        // : PocpProxyV1,
         this.ContractAddress.pocpRouter
       );
 
       let userAddress = this.signerAddress;
 
       const proxyContract = new this.walletWeb3.eth.Contract(
-        this.ContractAbi.pocpProxy,
+        signType === 'signTypedDatav2.0'
+          ? this.ContractAbi.pocpProxy
+          : PocpProxyV1,
         contractAddress
       );
 
-      // //Call your target method (must be registered on the dashboard).. here we are calling setQuote() method of our contract
       try {
         let tx = contract.methods
           .routeRequest({
@@ -343,8 +369,9 @@ class Pocp {
         tx.on('transactionHash', async function(hash: any) {
           try {
             console.log(`Transaction hash is ${hash}`);
+            await transactionHashCallback(hash);
           } catch (error) {
-            console.log('yoyooyoy', error);
+            throw error;
           }
         }).once(
           'confirmation',
@@ -364,12 +391,6 @@ class Pocp {
       } catch (error) {
         console.log('Catched Error', error);
       }
-
-      // .on('error', function(error: any) {
-      //   // Handle error
-      //   console.log('error', error);
-      //   throw error;
-      // });
     } else {
       //performs direct contract call if no config file is set
       try {
@@ -402,73 +423,71 @@ class Pocp {
     }
   };
 
-  // issueBadge = async (
-  //   contractAddress: string,
-  //   memberTokenId: number,
-  //   typeOfToken: number,
-  //   data: string,
-  //   tokenUri: string,
-  //   callbackFunction?: Function
-  // ) => {
-  //   if (this.config) {
-  //   } else {
-  //     //performs direct contract call if no config file is set
-  //     try {
-  //       this.ProxyContractInstance = new ethers.Contract(
-  //         contractAddress,
-  //         this.ContractAbi?.pocpProxy,
-  //         this.signer
-  //       );
-  //       const res = await (
-  //         await this.ProxyContractInstance?.issueBadge(
-  //           memberTokenId,
-  //           typeOfToken,
-  //           data,
-  //           tokenUri
-  //         )
-  //       ).wait();
-  //       if (callbackFunction) {
-  //         try {
-  //           await eventListener(
-  //             this.PocpInstance.pocpManager,
-  //             EventsEnum.MembershipClaimed,
-  //             callbackFunction,
-  //             res.transactionHash
-  //           );
-  //         } catch (error) {
-  //           throw error;
-  //         }
-  //       }
-  //       return res;
-  //     } catch (error) {
-  //       throw error;
-  //     }
-  //   }
-  // };
+  upgradeMembershipNft = async (
+    contractAddress: string,
+    tokenId: any,
+    level: number,
+    category: number,
+    metaDataHash: string,
+    transactionHashCallback: Function,
+    callbackFunction?: Function
+  ) => {
+    if (this.config) {
+      let contract = new this.networkWeb3.eth.Contract(
+        this.ContractAbi.pocpRouter,
+        this.ContractAddress.pocpRouter
+      );
 
-  // soulTransfer = async (
-  //   contractAddress: string,
-  //   voucher: any
-  //   // callbackFunction?: Function
-  // ) => {
-  //   if (this.config) {
-  //   } else {
-  //     //performs direct contract call if no config file is set
-  //     try {
-  //       this.ProxyContractInstance = new ethers.Contract(
-  //         contractAddress,
-  //         this.ContractAbi?.pocpProxy,
-  //         this.signer
-  //       );
-  //       const res = await (
-  //         await this.ProxyContractInstance?.soulTransfer(voucher)
-  //       ).wait();
-  //       return res;
-  //     } catch (error) {
-  //       throw error;
-  //     }
-  //   }
-  // };
+      let userAddress = this.signerAddress;
+
+      const proxyContract = new this.walletWeb3.eth.Contract(
+        this.ContractAbi.pocpProxy,
+        contractAddress
+      );
+
+      const data = generateData([level], [category])[0];
+      try {
+        let tx = contract.methods
+          .routeRequest({
+            to: contractAddress,
+            gas: 1e6,
+            value: 0,
+            data: proxyContract.methods
+              .updateMembership(tokenId, data, metaDataHash)
+              .encodeABI(),
+          })
+          .send({
+            from: userAddress,
+            signatureType: this.biconomyInstance.EIP712_SIGN,
+            gasLimit: 1e6,
+          });
+        tx.on('transactionHash', async function(hash: any) {
+          try {
+            console.log(`Transaction hash is ${hash}`);
+            await transactionHashCallback(hash);
+          } catch (error) {
+            throw error;
+          }
+        }).once(
+          'confirmation',
+          async (confirmationNumber: any, receipt: any) => {
+            console.log(receipt);
+            console.log(receipt.transactionHash, confirmationNumber);
+            if (callbackFunction) {
+              console.log('hash tx....', receipt);
+              try {
+                await callbackFunction(receipt);
+              } catch (error) {
+                throw error;
+              }
+            }
+          }
+        );
+      } catch (error) {
+        console.log('Catched Error', error);
+      }
+    }
+  };
 }
 
 export default Pocp;

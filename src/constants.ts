@@ -10,16 +10,15 @@ export const deployed_address = {
 };
 
 export const deployed_address_polygon = {
-  POCP_Manager: '0xE4F44A8ef530aa69C252A553D64f0b070AAF9a0A',
-  POCP_Beacon: '0x1f06C05EC5d69796CEF077369e50Ca347048CAC1',
-  POCP_Router: '0x7cd27c57e1CBb81Ba8f3aF35CFB275CB107C897d',
+  POCP_Manager: '0xDA6F4387C344f1312439E05E9f9580882abA6958',
+  POCP_Beacon: '0x083842b3F6739948D26C152C137929E0D3a906b9',
+  POCP_Router: '0xB9Acf5287881160e8CE66b53b507F6350d7a7b1B',
 };
 
 export const BASE_URL = {
   subgraph_mainnet:
-    'https://api.thegraph.com/subgraphs/id/Qmaaeqa3GmEUS5NP4HB2baqe9YnhpaQbfBC9CDdGL7AjLm',
-  subgraph:
-    'https://api.thegraph.com/subgraphs/id/QmPvkh7mmiA19HUYuqLyg133Q5qGMmqPb3LNwq7gEjL7uY',
+    'https://api.thegraph.com/subgraphs/name/eth-jashan/rep3-matic',
+  subgraph: 'https://api.thegraph.com/subgraphs/name/eth-jashan/rep3-mumbai',
 };
 
 export const SIGNING_DOMAIN_NAME = 'REP3Signer';
