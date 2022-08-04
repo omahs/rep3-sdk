@@ -19,29 +19,76 @@ yarn add pocp-service-sdk
 
 ## Getting Started
 
-The three main functions of this protocol are creating a community, approving a badge and claiming the approved badge. These functions (as found in pocp-service-sdk/src/pocp/index.ts/) are described below. Let's go through them one-by-one. 
+The three main functions of this protocol are registering community on the protocol, approving and claiming membership badges and issuing contribution/appreciation/pariticipation badges on memberships. These functions (as found in pocp-service-sdk/src/pocp/index.ts/) are described below. Let's go through them one-by-one. 
 >Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
 
-### 1. Creating a community
-The first step to using this protocol is creating a community. This is done by the community admin(s) using the `registerDaoToPocp` function. This takes the name of the DAO and an array of owners' addresses as parameters. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
+### 1. Instantiating Pocp
 
 ```javascript
 import Pocp from "pocp-service-sdk"
 
 # add relyer_token for a gasless transaction
- const pocp = new Pocp(signer, provider,
- {
-   relayer_token: "f1xxxxx-b2xx-44xx-9xxd-218xxxxxxf" //optional
- })
- await pocp.createInstance()
- const res = await pocp.registerDaoToPocp(
-       "Drepute", // name *required
-      ["0x0EB...4b53"], // array of string *required 
-       (eventEmitted)=>{} // callback function fires when event is emmitted
- )
+
+
+// For Polygon mainnet
+chainId = 137
+contractAddressConfig ={
+      pocpManger: "0xDA6F4387C344f1312439E05E9f9580882abA6958",
+      pocpBeacon: "0x083842b3F6739948D26C152C137929E0D3a906b9",
+      pocpRouter: "0xB9Acf5287881160e8CE66b53b507F6350d7a7b1B",
+}
+
+// For Polygon Mumbai
+chainId = 80001
+contractAddressConfig = {
+      pocpManger: "0xf00eAbb380752fed6414f3C12e3D8F976C7D024d",
+      pocpBeacon: "0xDcc7133abBA15B8f4Bf155A372C17744E0941f28",
+      pocpRouter: "0x1C6D20042bfc8474051Aba9FB4Ff85880089A669",
+}
+
+import { Biconomy } from "@biconomy/mexa"
+config = {
+      Biconomy,
+      apiKey: <api-key-biconomy>,
+      relayURL: <rpc-url>,
+}
+
+const pocp = new Pocp(
+      signer, null, walletProvider, chainId,
+      contractAddressConfig
+      config
+)
+await pocp.createInstance()
+
 ```
 
-### 2. Approving a badge
+
+
+### 1. Registering community
+The first step to using this protocol is registering community on the protocol. This is done by the community admin(s) using the `daoDeploy` function. This takes the name of the DAO and an array of owners' addresses as parameters. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
+
+```javascript
+
+daoName: string,
+    daoSymbol: string,
+    approverAddresses: [string],
+    upgradeableBeacon: string,
+    _trustedForwarder: string,
+    transactionHashCallback: Function,
+    callbackFunction?: Function
+
+const res = await pocp.registerDaoToPocp(
+      "<YourDAOName>", 
+      "<YourDAOERC721Symbol>",
+      ["<approverAddress_1>", "<approverAddress_2>", ..]
+      "0x083842b3F6739948D26C152C137929E0D3a906b9 (for mainnet) / 0xDcc7133abBA15B8f4Bf155A372C17744E0941f28 (for mumbai)",
+      "<biconomy-trusted-forwarder>",
+      callback_function, //triggered once hash is received
+      callback_function, //triggered once tx is confirmed
+)
+```
+
+### 2. Approving membership
 Before contributors can mint the badge to their addresses, the community admins must "ready" the badge for claiming. This is done via the `approveBadgeToContributor` function. It takes the community ID and three arrays (of IPFS URLs, claimers' addresses, and Identifiers) as parameters. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
 
 ```javascript
