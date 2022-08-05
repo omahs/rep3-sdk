@@ -88,15 +88,23 @@ await pocp.daoDeploy(
 Before contributors can mint the badge to their addresses, the community admins must "ready" the badge for claiming. This is done via the `createMembershipVoucher` function. It takes the proxy contract address of a dao, array of levels in integer,array of category in integer, end is the array of index <explain from somesh>, string of arweave or ipfs metadata hash seperating it by comma. For supporting back versioning of rep3 protocol, we have sign type version for different updates. The current rep3 Protocol supports "signTypedDatav2.0" and should be passed as a params.
 
 ```javascript
- await pocp.createMembershipVoucher(
+const signedVoucher:<signedVoucher> = await pocp.createMembershipVoucher(
             contractAddress,
-            [1,2],
-            [2,4],
+            [1,2],      // [<Levels of membership represented in 0,1...etc.>]
+            [2,4],      // [<Levels of categories represented in 0,1...etc.>]
             [],
-            ["0x0EB...4b53","0x0FG...3s67"],
-            "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",
-            "signTypedDatav2.0"
+            ["0x0EB...4b53","0x0FG...3s67"],   // [<claimer address>]
+            "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",    //<string of metadata_hash seperated by comma>
+            "signTypedDatav2.0"     //<Type of signature version>
         )
+ // returns object of signed voucher
+      {
+            "data":[257],
+            "end":[],
+            "to":["0x2669B5e41a56989EE58a2195f2bC54337c48c670"],
+            "tokenUris":"GrMjwgeaivFF0kkculkkzGeoxJUD0ChSiBpXc8DPPME,",
+      "signature":"0xc7453943fc82666aa5352d7a6fad6ca017eb4ce97d750a7f84604c501d5778ea06e61ffab6f7b56bfba765809376dbc0407639b3c923168f7c4cd7c5543cf28a1c"
+      }
 ```
 
 ### 3. Claiming membership NFT
@@ -107,8 +115,8 @@ The voucher created by the admin or approver of dao by signing the membership ap
 await pocp.claimMembershipNft(
         contractAddress,
         <Signed-Voucher>,
-        0, //index of address in signed voucher
-        "signTypedDatav2.0",
+        0,  //<index of address in signed voucher>
+        "signTypedDatav2.0",  //<Type of signature version>
         callback_function_tx_reciept, //triggered once hash is received
        callback_function_confirming_events, //triggered once tx is confirmed
   )
@@ -122,10 +130,10 @@ Approver of a dao can upgrade or downgrade membership NFTs of a contributor or a
 
 await pocp.upgradeMembershipNft(
         contractAddress,
-        1,
-        2,
-        3,
-      "AdaDsjj...DGdI",
+        1,  //<membershipNft token id>
+        2,  //<Upgrading level represented in number>
+        3,  //<Upgrading category represented in number>
+      "AdaDsjj...DGdI", //<metadata_hash of upgrading NFT>
       callback_function_tx_reciept, //triggered once hash is received
       callback_function_confirming_events, //triggered once tx is confirmed
     )
@@ -134,15 +142,15 @@ await pocp.upgradeMembershipNft(
 ### 5. Claiming Association Badges
 The voucher created by the admin or approver of dao by signing the contribution approval can be used to claim association NFT by the contributor or the member of dao by using `claimContributionBadges`. The function takes proxy contract address of a dao, signed voucher,membershipNFT token Id of contributor, index of address in signed voucher. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter. Or you can get the transaction reciept by getting the params of transaction hash callback function.
 
-`Note : It is adviced to keep the length of array same as the array of address. Keep an element in arrayOfData to be 0 as default.`
+`>Note : It is adviced to keep the length of array same as the array of address. Keep an element in arrayOfData to be 0 as default.`
 
 ```javascript
 
 await pocp.claimContributionBadges(
             contractAddress,
-            voucher,
-            1,
-            1,
+            <Signed_Voucher>,
+            1,    //<membershipNft token id>
+            1,    //<index of address in signed voucher>
             callback_function_tx_reciept, //triggered once hash is received
             callback_function_confirming_events, //triggered once tx is confirmed
         )
@@ -175,9 +183,17 @@ The PocpGetters class is initiated by the subgraph url.
 The `getdaoInfoForHash` getter function takes the transaction hash of `daoDeploy`, and returns the details of dao in contract.
 
 ```javascript
- const daoInfo = await pocpGetter.getdaoInfoForHash(
+ const daoInfo:<DaoDetails> = await pocpGetter.getdaoInfoForHash(
        `0xfsfs...sfaiee` // transaction hash
  )
+ 
+      // returns value DaoDetail
+      {
+        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
+        "name": "",
+        "symbol": "",
+        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
+      },
  
 ```
 
@@ -186,9 +202,17 @@ The `getMembershipNftsForHash` getter function takes the transaction hash of `cl
 
 ```javascript
       
- const membershipNft = await pocpGetter.getMembershipNftsForHash(
+ const membershipNft<MembershipNftDetaails> = await pocpGetter.getMembershipNftsForHash(
        `0xfje...vdvd` // transaction hash
  )
+      // returns value MembershipNftDetaail
+      {
+        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
+        "name": "",
+        "symbol": "",
+        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
+      },
+
  
 ```
 
@@ -197,7 +221,20 @@ The `membershipNftWithClaimerOfDao` getter function takes the `claimer address` 
 
 ```javascript
       
- const daoInfo = await pocpGetter.membershipNftWithClaimerOfDao(<Claimer-Address>,<Contract-Address>)
+ const membershipNfts = await pocpGetter.membershipNftWithClaimerOfDao(<Claimer-Address>,<Contract-Address>)
+ 
+      // returns value MembershipNftDetaails
+      [{
+        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
+        "name": "",
+        "symbol": "",
+        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
+      }{
+        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
+        "name": "",
+        "symbol": "",
+        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
+      }],
  
 ```
 
