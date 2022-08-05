@@ -23,6 +23,7 @@ The three main functions of this protocol are registering community on the proto
 >Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
 
 ### 1. Instantiating Pocp
+>Note: `callback_function_tx_reciept` in many functions sends transaction reciept as params, and `callback_function_confirming_events` send contract emmitted events as params
 
 ```javascript
 import Pocp from "pocp-service-sdk"
