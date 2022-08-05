@@ -8,6 +8,7 @@ import {
 } from '../types';
 import { eventListener, EventsEnum } from '../utils/eventListeners';
 import PocpProxyV1 from '../contracts/abi/proxy/pocpProxyV1.json';
+
 import Web3 from 'web3';
 import { createVoucher, generateData } from '../utils/voucherCreater';
 
@@ -186,7 +187,45 @@ class Pocp {
           if (err) {
             return console.error(err);
           }
-          if (result && result.result) {
+          if (result && !result.result) {
+            const signature = result.substring(2);
+            const r = '0x' + signature.substring(0, 64);
+            const s = '0x' + signature.substring(64, 128);
+            const v = parseInt(signature.substring(128, 130), 16);
+
+            const promiEvent: any = this.PocpInstance?.pocpManager?.methods
+              .executeMetaTransaction(
+                this.signerAddress,
+                functionSignature,
+                r,
+                s,
+                v
+              )
+              .send({
+                from: this.signerAddress,
+              });
+            promiEvent
+              .on('transactionHash', async (hash: any) => {
+                await transactionHashCallback(hash);
+              })
+              .once(
+                'confirmation',
+                async (_confirmationNumber: any, receipt: any) => {
+                  if (receipt.status) {
+                    console.log('Transaction processed successfully');
+                    if (callbackFunction) {
+                      try {
+                        await callbackFunction(receipt);
+                      } catch (error) {
+                        throw error;
+                      }
+                    }
+                  } else {
+                    console.log('Transaction failed');
+                  }
+                }
+              );
+          } else if (result && result.result) {
             const signature = result.result.substring(2);
             const r = '0x' + signature.substring(0, 64);
             const s = '0x' + signature.substring(64, 128);
@@ -486,6 +525,159 @@ class Pocp {
       } catch (error) {
         console.log('Catched Error', error);
       }
+    }
+  };
+
+  createBadgeVoucher = async (
+    proxyAddress: string,
+    arrayOfMemberTokenId: [string],
+    arrayofBadgeType: [number],
+    arrayOfTokenUri: [string],
+    arrayOfNounce: [string],
+    arrayOfData: [number]
+  ) => {
+    try {
+      const domain = {
+        name: 'REP3Signer',
+        version: '0.0.1',
+        verifyingContract: proxyAddress, //contract address
+        salt: '0x' + this.chainId.toString(16).padStart(64, '0'), //For mainnet replace 80001 with 137
+      };
+
+      console.log(
+        proxyAddress,
+        arrayOfMemberTokenId,
+        arrayofBadgeType,
+        arrayOfTokenUri,
+        arrayOfNounce,
+        arrayOfData
+      );
+
+      const types = {
+        BadgeVoucher: [
+          { name: 'index', type: 'uint32' },
+          { name: 'memberTokenIds', type: 'uint256[]' },
+          { name: 'type_', type: 'uint8[]' },
+          { name: 'tokenUri', type: 'string' },
+          { name: 'data', type: 'uint256[]' },
+          { name: 'nonces', type: 'uint32[]' },
+        ],
+      };
+
+      const badgeVoucher = {
+        index: 0,
+        memberTokenIds: arrayOfMemberTokenId,
+        type_: arrayofBadgeType,
+        tokenUri: `${arrayOfTokenUri.toString()},`,
+        data: arrayOfData,
+        nonces: arrayOfNounce,
+      };
+
+      const signature = await this.signer._signTypedData(
+        domain,
+        types,
+        badgeVoucher
+      );
+      return {
+        ...badgeVoucher,
+        signature,
+      };
+    } catch (error) {
+      console.log('error', error);
+      throw error;
+    }
+  };
+
+  claimContributionBadges = async (
+    contractAddress: string,
+    voucher: any,
+    memberTokenId: number,
+    approveIndex: [number],
+    transactionHashCallback: Function,
+    callbackFunction?: Function
+  ) => {
+    if (this.config) {
+      let contract = new this.networkWeb3.eth.Contract(
+        this.ContractAbi.pocpRouter,
+        this.ContractAddress.pocpRouter
+      );
+
+      let userAddress = this.signerAddress;
+
+      const proxyContract = new this.walletWeb3.eth.Contract(
+        this.ContractAbi.pocpProxy,
+        contractAddress
+      );
+
+      try {
+        let tx = contract.methods
+          .routeRequest({
+            to: contractAddress,
+            gas: 1e6,
+            value: 0,
+            data: proxyContract.methods
+              .claimBadge(voucher, memberTokenId, approveIndex)
+              .encodeABI(),
+          })
+          .send({
+            from: userAddress,
+            signatureType: this.biconomyInstance.EIP712_SIGN,
+            gasLimit: 1e6,
+          });
+        tx.on('transactionHash', async function(hash: any) {
+          try {
+            console.log(`Transaction hash is ${hash}`);
+            await transactionHashCallback(hash);
+          } catch (error) {
+            throw error;
+          }
+        }).once(
+          'confirmation',
+          async (confirmationNumber: any, receipt: any) => {
+            console.log(receipt);
+            console.log(receipt.transactionHash, confirmationNumber);
+            if (callbackFunction) {
+              console.log('hash tx....', receipt);
+              try {
+                await callbackFunction(receipt);
+              } catch (error) {
+                throw error;
+              }
+            }
+          }
+        );
+      } catch (error) {
+        console.log('Catched Error', error);
+      }
+    } else {
+      //performs direct contract call if no config file is set
+      // try {
+      //   this.ProxyContractInstance = new this.walletWeb3.eth.Contract(
+      //     this.ContractAbi?.pocpProxy,
+      //     contractAddress
+      //   );
+      //   const res = await (
+      //     await this.ProxyContractInstance?.claimMembership(
+      //       voucher,
+      //       approvedAddressIndex
+      //     )
+      //   ).wait();
+      //   if (callbackFunction) {
+      //     try {
+      //       await eventListener(
+      //         this.PocpInstance.pocpManager,
+      //         EventsEnum.MembershipClaimed,
+      //         callbackFunction,
+      //         res.transactionHash
+      //       );
+      //     } catch (error) {
+      //       throw error;
+      //     }
+      //   }
+      //   return res;
+      // } catch (error) {
+      //   throw error;
+      // }
     }
   };
 }
