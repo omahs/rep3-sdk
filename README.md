@@ -19,51 +19,166 @@ yarn add pocp-service-sdk
 
 ## Getting Started
 
-The three main functions of this protocol are creating a community, approving a badge and claiming the approved badge. These functions (as found in pocp-service-sdk/src/pocp/index.ts/) are described below. Let's go through them one-by-one. 
+The three main functions of this protocol are registering community on the protocol, approving and claiming membership badges and issuing contribution/appreciation/pariticipation badges on memberships. These functions (as found in pocp-service-sdk/src/pocp/index.ts/) are described below. Let's go through them one-by-one. 
 >Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
 
-### 1. Creating a community
-The first step to using this protocol is creating a community. This is done by the community admin(s) using the `registerDaoToPocp` function. This takes the name of the DAO and an array of owners' addresses as parameters. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
+### 1. Instantiating Pocp
 
 ```javascript
 import Pocp from "pocp-service-sdk"
 
 # add relyer_token for a gasless transaction
- const pocp = new Pocp(signer, provider,
- {
-   relayer_token: "f1xxxxx-b2xx-44xx-9xxd-218xxxxxxf" //optional
- })
- await pocp.createInstance()
- const res = await pocp.registerDaoToPocp(
-       "Drepute", // name *required
-      ["0x0EB...4b53"], // array of string *required 
-       (eventEmitted)=>{} // callback function fires when event is emmitted
- )
+
+
+// For Polygon mainnet
+chainId = 137
+contractAddressConfig ={
+      pocpManger: "0xDA6F4387C344f1312439E05E9f9580882abA6958",
+      pocpBeacon: "0x083842b3F6739948D26C152C137929E0D3a906b9",
+      pocpRouter: "0xB9Acf5287881160e8CE66b53b507F6350d7a7b1B",
+}
+
+// For Polygon Mumbai
+chainId = 80001
+contractAddressConfig = {
+      pocpManger: "0xf00eAbb380752fed6414f3C12e3D8F976C7D024d",
+      pocpBeacon: "0xDcc7133abBA15B8f4Bf155A372C17744E0941f28",
+      pocpRouter: "0x1C6D20042bfc8474051Aba9FB4Ff85880089A669",
+}
+
+import { Biconomy } from "@biconomy/mexa"
+config = {
+      biconomyInstance:Biconomy,
+      apiKey: <api-key-biconomy>,
+      relayURL: <rpc-url>,
+}
+
+const pocp = new Pocp(
+      signer, null, walletProvider, chainId,
+      contractAddressConfig
+      config
+)
+await pocp.createInstance()
+
 ```
 
-### 2. Approving a badge
-Before contributors can mint the badge to their addresses, the community admins must "ready" the badge for claiming. This is done via the `approveBadgeToContributor` function. It takes the community ID and three arrays (of IPFS URLs, claimers' addresses, and Identifiers) as parameters. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
+
+
+### 1. Registering community
+The first step to using this protocol is registering community on the protocol. This is done by the community admin(s) using the `daoDeploy` function. This takes the name of the DAO and an array of owners' addresses as parameters. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter.
 
 ```javascript
 
- const res = await pocp.approveBadgeToContributor(
-       12, // community id as int *required
-       ["0x0EB...4b53"], // array of claimer's addresses *required
-       ["ipfs://baf.....di"],// array of ipfs metadata uri *required
-       ["afk..13"], // array of identifier or id *required
-       (eventEmitted)=>{} // callback function fires when event is emmitted
- )
-```
+      daoName: string,
+      daoSymbol: string,
+      approverAddresses: [string],
+      upgradeableBeacon: string,
+      _trustedForwarder: string,
+      transactionHashCallback: Function,
+      callbackFunction?: Function
 
-### 3. Claiming the approved badge 
-Finally, the contributors can claim the approved badges which mints them to their addresses. This happens via the `claimBadgesByClaimers` function, which takes an array of token IDs as its parameter. In case you want to listen to the event emitted, you can pass it as an event callback which takes the event emitted as its parameter.
+const res = await pocp.registerDaoToPocp(
+      "<YourDAOName>", 
+      "<YourDAOERC721Symbol>",
+      ["<approverAddress_1>", "<approverAddress_2>", ..]
+      "0x083842b3F6739948D26C152C137929E0D3a906b9 (for mainnet) / 0xDcc7133abBA15B8f4Bf155A372C17744E0941f28 (for mumbai)",
+      "0xB9Acf5287881160e8CE66b53b507F6350d7a7b1B (for mainnet) / 0x1C6D20042bfc8474051Aba9FB4Ff85880089A669 (for mumbai)",,
+      callback_function, //triggered once hash is received
+      callback_function, //triggered once tx is confirmed
+)
+```
+### 2. Approving membership
+Before contributors can mint the badge to their addresses, the community admins must "ready" the badge for claiming. This is done via the `createMembershipVoucher` function. It takes the proxy contract address of a dao, array of levels in int,array of category in int, to is the array of index <explain from somesh>, string of arweave or ipfs metadata hash seperating it by comma. For supporting back versioning of rep3 protocol, we have sign type version for different updates. The current rep3 Protocol supports "signTypedDatav2.0" and should be passed as a params.
 
 ```javascript
 
- const res = await pocp.claimBadgesByClaimers(
-       [1], //array of token ids to be claimed
-       (eventEmitted)=>{} // callback function fires when event is emmitted
- )
+      proxyAddress: string,
+      levels: [number],
+      categories: [number],
+      end: [number],
+      to: [string],
+      tokenUris: string,
+      signType: string
+
+ const res = await pocp.createMembershipVoucher(
+            contractAddress,
+            [1,2],
+            [2,4],
+            [],
+            ["0x0EB...4b53","0x0FG...3s67"],
+            "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",
+            "signTypedDatav2.0"
+        )
+```
+
+### 3. Claiming membership NFT
+The voucher created by the admin or approver of dao by signing the membership approval can be used to claim membership NFT by the contributor or the member of dao by using `claimMembershipNft`. The function takes proxy contract address of a dao, signed voucher, index of address in signed voucher, version of sign used while approving membership. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter. Or you can get the transaction reciept by getting the params of transaction hash callback function.
+
+      ```javascript
+
+      contractAddress: string,
+      voucher: any,
+      approvedAddressIndex: number,
+      signType: string,
+      transactionHashCallback: Function,
+      callbackFunction?: Function
+
+      await pocp.claimMembershipNft(
+            contractAddress,
+            <Signed-Voucher>,
+            0, //index of address in signed voucher
+            "signTypedDatav2.0",
+            (x) => console.log("Tranaction Reciept callback", x),
+            (x) => console.log("Transaction Confirmation callback", x),
+      )
+      ```
+
+### 4. Upgrading membership NFT
+Approver of a dao can upgrade or downgrade membership NFTs of a contributor or a member of dao via `upgradeMembershipNft` by passing dao's contract address, tokenId of the membership NFT, level to which it should be upgraded or downgraded, category to which it should be upgraded or downgraded, ipfs or arweave hash for the NFT. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter. Or you can get the transaction reciept by getting the params of transaction hash callback function.
+
+```javascript
+
+      contractAddress: string,
+      tokenId: any,
+      level: number,
+      category: number,
+      metaDataHash: string,
+      transactionHashCallback: Function,
+      callbackFunction?: Function
+
+await pocp.upgradeMembershipNft(
+        contractAddress,
+        1,
+        2,
+        3,
+      "AdaDsjj...DGdI",
+       (x) => console.log("Tranaction Reciept callback", x),
+       (x) => console.log("Transaction Confirmation callback", x)
+    )
+```
+
+### 5. Claiming Association Badges
+The voucher created by the admin or approver of dao by signing the contribution approval can be used to claim association NFT by the contributor or the member of dao by using `claimContributionBadges`. The function takes proxy contract address of a dao, signed voucher,membershipNFT token Id of contributor, index of address in signed voucher. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter. Or you can get the transaction reciept by getting the params of transaction hash callback function.
+
+`Note : It is adviced to keep the length of array same as the array of address. Keep an element in arrayOfData to be 0 as default.`
+
+```javascript
+
+      contractAddress: string,
+      voucher: any,
+      memberTokenId: number,
+      approveIndex: [number],
+      transactionHashCallback: Function,
+      callbackFunction?: Function
+
+await pocp.claimContributionBadges(
+            contractAddress,
+            voucher,
+            1,
+            1,
+            (x) => console.log("Tranaction Reciept callback", x),
+            (x) => console.log("Transaction Confirmation callback", x)
+        )
 ```
 
 ## Some Other Functions 
