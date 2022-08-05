@@ -107,7 +107,7 @@ Before contributors can mint the badge to their addresses, the community admins 
             [],
             ["0x0EB...4b53","0x0FG...3s67"],
             "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",
-            signTypedDatav2.0
+            "signTypedDatav2.0"
         )
 ```
 
