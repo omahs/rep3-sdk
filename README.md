@@ -86,15 +86,16 @@ await pocp.daoDeploy(
 
 
 ### 2. Approving membership
-Before contributors can mint the badge to their addresses, the community admins must "ready" the badge for claiming. This is done via the `createMembershipVoucher` function. It takes the proxy contract address of a dao, array of levels in integer,array of category in integer, end is the array of index <explain from somesh>, string of arweave or ipfs metadata hash seperating it by comma. For supporting back versioning of rep3 protocol, we have sign type version for different updates. The current rep3 Protocol supports "signTypedDatav2.0" and should be passed as a params.
+Before contributors can mint the badge to their addresses, the community admins must "ready" the badge for claiming. This is done via the `createMembershipVoucher` function. It takes the proxy contract address of a dao, array of levels in integer,array of category in integer, refer to note below for array of end,array of contributor's address, string of arweave or ipfs metadata hash seperating it by comma. For supporting back versioning of rep3 protocol, we have sign type version for different updates. The current rep3 Protocol supports "signTypedDatav2.0" and should be passed as a params.
+>Note for end array : In example below first 3 address from contributors address have to be approved for level1 and category2 so the first element       in the end array is 2 and as the remaining combination i.e level2 and category4 is for remaining 2 address as it's ending address is at the end         of contributors array the second element in end array is 4. If all arrays refers to same level and category, send it as a empty array
 
 ```javascript
 const signedVoucher:<signedVoucher> = await pocp.createMembershipVoucher(
             contractAddress,
             [1,2],      // [<Levels of membership represented in 0,1...etc.>]
             [2,4],      // [<Levels of categories represented in 0,1...etc.>]
-            [],
-            ["0x0EB...4b53","0x0FG...3s67"],   // [<claimer address>]
+            [2,4],      // refer to note section above
+            ["0x0EB...4b53","0x0FG...3s67","0x0RT...3dfr3","0x0WE...3ar4T","0x0re4...3d534"],   // [<claimer address>]
             "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",    //<string of metadata_hash seperated by comma>
             "signTypedDatav2.0"     //<Type of signature version>
         )
@@ -206,7 +207,7 @@ The `getMembershipNftsForHash` getter function takes the transaction hash of `cl
  const membershipNft<MembershipNftDetaails> = await pocpGetter.getMembershipNftsForHash(
        `0xfje...vdvd` // transaction hash
  )
-      // returns value MembershipNftDetaail
+      // returns value MembershipNftDetail
       {
         "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
         "name": "",
@@ -224,7 +225,7 @@ The `membershipNftWithClaimerOfDao` getter function takes the `claimer address` 
       
  const membershipNfts = await pocpGetter.membershipNftWithClaimerOfDao(<Claimer-Address>,<Contract-Address>)
  
-      // returns value MembershipNftDetaails
+      // returns value MembershipNftDetails
       [{
         "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
         "name": "",
