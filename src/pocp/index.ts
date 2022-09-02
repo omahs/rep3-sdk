@@ -4,42 +4,43 @@ import {
   IContractAbi,
   IContractAddress,
   IContractFactory,
+  IMembershipVoucherV1,
+  IMembershipVoucherV2,
   IPocpConfig,
 } from '../types';
-import { eventListener, EventsEnum } from '../utils/eventListeners';
+// import { eventListener, EventsEnum } from '../utils/eventListeners';
 import PocpProxyV1 from '../contracts/abi/proxy/pocpProxyV1.json';
-
 import Web3 from 'web3';
 import { createVoucher, generateData } from '../utils/voucherCreater';
 
 class Pocp {
   signer!: any;
-  provider!: any;
   signerAddress!: string;
   config!: IPocpConfig;
   ContractAbi!: IContractAbi;
   ContractAddress!: IContractAddress;
-  chainId: any;
+  chainId: number;
   PocpInstance!: IContract;
   contractInfo!: IContractFactory;
   ProxyContractInstance!: any;
   biconomyInstance: any;
-  networkWeb3: any;
-  walletWeb3: any;
+  networkWeb3: typeof Web3.givenProvider | undefined;
+  walletWeb3: typeof Web3.givenProvider;
+  packageInitialised: boolean;
 
   constructor(
     getSigner: any,
-    getProvider: any,
-    walletProvider: any,
-    chainId: any,
+    walletProvider: typeof Web3.givenProvider,
+    chainId: number,
     contractAddressConfig: IContractAddress | any,
     config: IPocpConfig | undefined
   ) {
     this.signer = getSigner;
-    this.provider = getProvider;
     this.walletWeb3 = new Web3(walletProvider);
     this.chainId = chainId;
     this.ContractAddress = contractAddressConfig;
+    this.packageInitialised = false;
+
     if (config) {
       this.config = config;
       this.biconomyInstance = new this.config.biconomyInstance(
@@ -63,20 +64,11 @@ class Pocp {
   createInstance = async () => {
     this.contractInfo = new ContractFactory(this.chainId);
     this.ContractAbi = this.contractInfo.getAbi();
-    // this.ContractAddress = this.contractInfo.getAddress();
     this.signerAddress = await this.signer.getAddress();
-    console.log(
-      'Contracts and Signer Address',
-      this.signerAddress,
-      this.ContractAddress
-    );
 
     if (this.config) {
       this.biconomyInstance
         .onEvent(this.biconomyInstance.READY, async () => {
-          // Initialize your contracts here using biconomy's provider instance
-          // Initialize dapp here like getting user accounts etc
-          // Initializing manager contract
           this.PocpInstance = {
             pocpManager: new this.networkWeb3.eth.Contract(
               this.ContractAbi?.pocpManger,
@@ -85,6 +77,7 @@ class Pocp {
             pocpBeacon: undefined,
           };
           console.log('Manager Deployed!!!!');
+          this.packageInitialised = true;
         })
         .onEvent(this.biconomyInstance.ERROR, (error: any, message: any) => {
           throw {
@@ -109,7 +102,8 @@ class Pocp {
 
   /*
    * @param dao name in string
-   * @param array of approvers wallet address
+   * @param dao symbol in string
+   * @param approver address in array
    * @returns The transaction receipt is contract call success
    * @throws "Contract call fails"
    * @throws "Metamask errors"
@@ -120,15 +114,12 @@ class Pocp {
     daoName: string,
     daoSymbol: string,
     approverAddresses: [string],
-    upgradeableBeacon: string,
-    _trustedForwarder: string,
     transactionHashCallback: Function,
     callbackFunction?: Function
   ) => {
     //performs relay function if config file is set
 
     if (this.config) {
-      console.log('config file setup');
       const domainType = [
         { name: 'name', type: 'string' },
         { name: 'version', type: 'string' },
@@ -156,8 +147,8 @@ class Pocp {
           daoName,
           daoSymbol,
           approverAddresses,
-          upgradeableBeacon,
-          _trustedForwarder
+          this.ContractAddress.pocpBeacon,
+          this.ContractAddress.pocpRouter
         )
         .encodeABI();
 
@@ -176,23 +167,35 @@ class Pocp {
         message: message,
       });
 
-      this.walletWeb3.currentProvider.sendAsync(
+      await this.walletWeb3.currentProvider.sendAsync(
         {
           jsonrpc: '2.0',
           id: 999999999999,
-          method: 'eth_signTypedData_v4',
+          method: 'eth_signTypedData_v3',
           params: [this.signerAddress, dataToSign],
         },
         async (err: any, result: any) => {
           if (err) {
-            return console.error(err);
+            console.log('error caught then catch', err);
+            throw err;
           }
           if (result && !result.result) {
             const signature = result.substring(2);
             const r = '0x' + signature.substring(0, 64);
             const s = '0x' + signature.substring(64, 128);
             const v = parseInt(signature.substring(128, 130), 16);
-
+            console.log(
+              'sig',
+              result,
+              'r',
+              r,
+              's',
+              s,
+              'v',
+              v,
+              'funcSig',
+              functionSignature
+            );
             const promiEvent: any = this.PocpInstance?.pocpManager?.methods
               .executeMetaTransaction(
                 this.signerAddress,
@@ -206,22 +209,30 @@ class Pocp {
               });
             promiEvent
               .on('transactionHash', async (hash: any) => {
-                await transactionHashCallback(hash);
+                try {
+                  await transactionHashCallback(hash);
+                } catch (error) {
+                  throw error;
+                }
               })
               .once(
                 'confirmation',
                 async (_confirmationNumber: any, receipt: any) => {
-                  if (receipt.status) {
-                    console.log('Transaction processed successfully');
-                    if (callbackFunction) {
-                      try {
-                        await callbackFunction(receipt);
-                      } catch (error) {
-                        throw error;
+                  try {
+                    if (receipt.status) {
+                      console.log('Transaction processed successfully');
+                      if (callbackFunction) {
+                        try {
+                          await callbackFunction(receipt);
+                        } catch (error) {
+                          throw error;
+                        }
                       }
+                    } else {
+                      throw 'Transaction failed';
                     }
-                  } else {
-                    console.log('Transaction failed');
+                  } catch (error) {
+                    throw error;
                   }
                 }
               );
@@ -230,7 +241,18 @@ class Pocp {
             const r = '0x' + signature.substring(0, 64);
             const s = '0x' + signature.substring(64, 128);
             const v = parseInt(signature.substring(128, 130), 16);
-
+            console.log(
+              'sig',
+              result,
+              'r',
+              r,
+              's',
+              s,
+              'v',
+              v,
+              'funcSig',
+              functionSignature
+            );
             const promiEvent: any = this.PocpInstance?.pocpManager?.methods
               .executeMetaTransaction(
                 this.signerAddress,
@@ -244,63 +266,52 @@ class Pocp {
               });
             promiEvent
               .on('transactionHash', async (hash: any) => {
-                await transactionHashCallback(hash);
+                try {
+                  await transactionHashCallback(hash);
+                } catch (error) {
+                  throw error;
+                }
               })
               .once(
                 'confirmation',
                 async (_confirmationNumber: any, receipt: any) => {
-                  if (receipt.status) {
-                    console.log('Transaction processed successfully');
-                    if (callbackFunction) {
-                      try {
-                        await callbackFunction(receipt);
-                      } catch (error) {
-                        throw error;
+                  try {
+                    if (receipt.status) {
+                      console.log('Transaction processed successfully');
+                      if (callbackFunction) {
+                        try {
+                          await callbackFunction(receipt);
+                        } catch (error) {
+                          throw error;
+                        }
                       }
+                    } else {
+                      throw 'Transaction failed';
                     }
-                  } else {
-                    console.log('Transaction failed');
+                  } catch (error) {
+                    throw error;
                   }
                 }
               );
           } else {
-            console.log(
-              'Could not get user signature. Check console for error'
-            );
+            throw 'Could not get user signature. Check console for error';
           }
         }
       );
     } else {
       //performs direct contract call if no config file is set
-
-      try {
-        const res = await (
-          await this.PocpInstance.pocpManager?.deployREP3TokenProxy(
-            daoName,
-            daoSymbol,
-            approverAddresses,
-            this.contractInfo.getAddress().pocpBeacon
-          )
-        ).wait();
-        if (callbackFunction) {
-          try {
-            await eventListener(
-              this.PocpInstance.pocpManager,
-              EventsEnum.DaoContractDeployed,
-              callbackFunction,
-              res.transactionHash
-            );
-          } catch (error) {
-            throw error;
-          }
-        }
-        return res;
-      } catch (error) {
-        throw error;
-      }
     }
   };
 
+  /*
+   * @param dao's contract address in string
+   * @param dao's membershipNFT object of type
+   * @param approver address in array
+   * @returns The transaction receipt is contract call success
+   * @throws "Contract call fails"
+   * @throws "Metamask errors"
+   * @throws "Relayer Api Call errors"
+   */
   createMembershipVoucher = async (
     proxyAddress: string,
     levels: [number],
@@ -333,11 +344,7 @@ class Pocp {
         { name: 'tokenUris', type: 'string' },
       ],
     };
-    console.log(
-      'signing type loaded',
-      signType,
-      signType === 'signTypedDatav2.0' ? typesV2 : typesV1
-    );
+
     const voucher = createVoucher(
       levels,
       categories,
@@ -357,44 +364,42 @@ class Pocp {
     };
   };
 
+  /*
+   * @param dao's contract address in string
+   * @param claimer's membershipNFT voucher
+   * @param approver address index in number
+   * @returns The transaction receipt is contract call success
+   * @throws "Contract call fails"
+   * @throws "Metamask errors"
+   * @throws "Relayer Api Call errors"
+   */
   claimMembershipNft = async (
     contractAddress: string,
-    voucher: any,
+    voucher: IMembershipVoucherV1 | IMembershipVoucherV2,
     approvedAddressIndex: number,
     signType: string,
+    gas: number,
+    gasLimit: number,
     transactionHashCallback: Function,
     callbackFunction?: Function
   ) => {
     if (this.config) {
-      console.log(
-        'Loaded Config',
-        this.ContractAddress.pocpRouter,
-        signType === 'signTypedDatav2.0'
-          ? this.ContractAbi.pocpRouter
-          : PocpProxyV1
-      );
       let contract = new this.networkWeb3.eth.Contract(
-        // signType === 'signTypedDatav2.0'
-        //   ?
         this.ContractAbi.pocpRouter,
-        // : PocpProxyV1,
         this.ContractAddress.pocpRouter
       );
-
       let userAddress = this.signerAddress;
-
       const proxyContract = new this.walletWeb3.eth.Contract(
         signType === 'signTypedDatav2.0'
           ? this.ContractAbi.pocpProxy
           : PocpProxyV1,
         contractAddress
       );
-
       try {
         let tx = contract.methods
           .routeRequest({
             to: contractAddress,
-            gas: 1e6,
+            gas,
             value: 0,
             data: proxyContract.methods
               .claimMembership(voucher, approvedAddressIndex)
@@ -403,11 +408,10 @@ class Pocp {
           .send({
             from: userAddress,
             signatureType: this.biconomyInstance.EIP712_SIGN,
-            gasLimit: 1e6,
+            gasLimit,
           });
         tx.on('transactionHash', async function(hash: any) {
           try {
-            console.log(`Transaction hash is ${hash}`);
             await transactionHashCallback(hash);
           } catch (error) {
             throw error;
@@ -418,7 +422,6 @@ class Pocp {
             console.log(receipt);
             console.log(receipt.transactionHash, confirmationNumber);
             if (callbackFunction) {
-              console.log('hash tx....', receipt);
               try {
                 await callbackFunction(receipt);
               } catch (error) {
@@ -432,42 +435,28 @@ class Pocp {
       }
     } else {
       //performs direct contract call if no config file is set
-      try {
-        this.ProxyContractInstance = new this.walletWeb3.eth.Contract(
-          this.ContractAbi?.pocpProxy,
-          contractAddress
-        );
-        const res = await (
-          await this.ProxyContractInstance?.claimMembership(
-            voucher,
-            approvedAddressIndex
-          )
-        ).wait();
-        if (callbackFunction) {
-          try {
-            await eventListener(
-              this.PocpInstance.pocpManager,
-              EventsEnum.MembershipClaimed,
-              callbackFunction,
-              res.transactionHash
-            );
-          } catch (error) {
-            throw error;
-          }
-        }
-        return res;
-      } catch (error) {
-        throw error;
-      }
     }
   };
 
+  /*
+   * @param dao's contract address in string
+   * @param  membershipNFT tokenId in number
+   * @param level in number
+   * @param category in number
+   * @param metadataHash in string
+   * @returns The transaction receipt is contract call success
+   * @throws "Contract call fails"
+   * @throws "Metamask errors"
+   * @throws "Relayer Api Call errors"
+   */
   upgradeMembershipNft = async (
     contractAddress: string,
-    tokenId: any,
+    tokenId: number,
     level: number,
     category: number,
     metaDataHash: string,
+    gas: number,
+    gasLimit: number,
     transactionHashCallback: Function,
     callbackFunction?: Function
   ) => {
@@ -489,7 +478,7 @@ class Pocp {
         let tx = contract.methods
           .routeRequest({
             to: contractAddress,
-            gas: 1e6,
+            gas,
             value: 0,
             data: proxyContract.methods
               .updateMembership(tokenId, data, metaDataHash)
@@ -498,7 +487,7 @@ class Pocp {
           .send({
             from: userAddress,
             signatureType: this.biconomyInstance.EIP712_SIGN,
-            gasLimit: 1e6,
+            gasLimit,
           });
         tx.on('transactionHash', async function(hash: any) {
           try {
@@ -593,6 +582,8 @@ class Pocp {
     voucher: any,
     memberTokenId: number,
     approveIndex: [number],
+    gas: number,
+    gasLimit: number,
     transactionHashCallback: Function,
     callbackFunction?: Function
   ) => {
@@ -613,7 +604,7 @@ class Pocp {
         let tx = contract.methods
           .routeRequest({
             to: contractAddress,
-            gas: 1e6,
+            gas,
             value: 0,
             data: proxyContract.methods
               .claimBadge(voucher, memberTokenId, approveIndex)
@@ -622,7 +613,7 @@ class Pocp {
           .send({
             from: userAddress,
             signatureType: this.biconomyInstance.EIP712_SIGN,
-            gasLimit: 1e6,
+            gasLimit,
           });
         tx.on('transactionHash', async function(hash: any) {
           try {
@@ -634,7 +625,6 @@ class Pocp {
         }).once(
           'confirmation',
           async (confirmationNumber: any, receipt: any) => {
-            console.log(receipt);
             console.log(receipt.transactionHash, confirmationNumber);
             if (callbackFunction) {
               console.log('hash tx....', receipt);
