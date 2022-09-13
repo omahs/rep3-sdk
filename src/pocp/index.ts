@@ -12,6 +12,7 @@ import {
 import PocpProxyV1 from '../contracts/abi/proxy/pocpProxyV1.json';
 import Web3 from 'web3';
 import { createVoucher, generateData } from '../utils/voucherCreater';
+import { getApproversForDao } from '../utils/internalFunctions';
 
 class Pocp {
   signer!: any;
@@ -668,6 +669,88 @@ class Pocp {
       // } catch (error) {
       //   throw error;
       // }
+    }
+  };
+
+  updateApprovers = async (
+    approverAddresses: [string],
+    contractAddress: string,
+    subgraphUrl: string,
+    gas: number,
+    gasLimit: number,
+    transactionHashCallback: Function,
+    callbackFunction?: Function
+  ) => {
+    if (this.config) {
+      let contract = new this.networkWeb3.eth.Contract(
+        this.ContractAbi.pocpRouter,
+        this.ContractAddress.pocpRouter
+      );
+
+      let userAddress = this.signerAddress;
+
+      const proxyContract = new this.walletWeb3.eth.Contract(
+        this.ContractAbi.pocpProxy,
+        contractAddress
+      );
+
+      try {
+        let currentApprovers: [string] = await getApproversForDao(
+          contractAddress,
+          subgraphUrl
+        );
+
+        console.log(
+          'current approvers are',
+          currentApprovers,
+          contractAddress,
+          subgraphUrl
+        );
+
+        const removedApprovers = currentApprovers.filter(
+          ele => !approverAddresses.includes(ele)
+        );
+        const newlyAddedApprovers = approverAddresses.filter(
+          ele => !currentApprovers.includes(ele)
+        );
+        let tx = contract.methods
+          .routeRequest({
+            to: contractAddress,
+            gas,
+            value: 0,
+            data: proxyContract.methods
+              .changeApprover(newlyAddedApprovers, removedApprovers)
+              .encodeABI(),
+          })
+          .send({
+            from: userAddress,
+            signatureType: this.biconomyInstance.EIP712_SIGN,
+            gasLimit,
+          });
+        tx.on('transactionHash', async function(hash: any) {
+          try {
+            console.log(`Transaction hash is ${hash}`);
+            await transactionHashCallback(hash);
+          } catch (error) {
+            throw error;
+          }
+        }).once(
+          'confirmation',
+          async (confirmationNumber: any, receipt: any) => {
+            console.log(receipt.transactionHash, confirmationNumber);
+            if (callbackFunction) {
+              console.log('receipt tx....', receipt);
+              try {
+                await callbackFunction(receipt);
+              } catch (error) {
+                throw error;
+              }
+            }
+          }
+        );
+      } catch (error) {
+        console.log('Catched Error', error);
+      }
     }
   };
 }

@@ -74,3 +74,11 @@ query($id: String) {
   }
 }
 `;
+
+export const getApproversOfDao = `
+query($contractAddress: String) {
+  daos(where:{id: $contractAddress}){
+    id
+    approver
+  }
+}`;
