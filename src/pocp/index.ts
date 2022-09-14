@@ -706,12 +706,20 @@ class Pocp {
           contractAddress,
           subgraphUrl
         );
+        const approverAddressesInLowercase = approverAddresses.map(ele =>
+          ele.toLowerCase()
+        );
 
         const removedApprovers = currentApprovers.filter(
-          ele => !approverAddresses.includes(ele)
+          ele => !approverAddressesInLowercase.includes(ele.toLowerCase())
         );
-        const newlyAddedApprovers = approverAddresses.filter(
-          ele => !currentApprovers.includes(ele)
+        const newlyAddedApprovers = approverAddressesInLowercase.filter(
+          ele => !currentApprovers.includes(ele.toLowerCase())
+        );
+        console.log(
+          'removed approvers and added approvers',
+          removedApprovers,
+          newlyAddedApprovers
         );
         let tx = contract.methods
           .routeRequest({
