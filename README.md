@@ -1,12 +1,18 @@
 # POCP Service SDK
 
-POCP (or Proof of Contribution Protocol) is the beta version of the REP3 Protocol--a credential management tool for DAOs and their members. 
+The Proof of Contribution Protocol (or PoCP) is the beta version of rep3's credentialing protocol. The rep3 DAO tool (live at https://app.rep3.gg/) is one possible implementation of the protocol to facilitate better member and contribution management for DAOs.
 
-Simply put, this tool enables DAOs to give their contributors a stamp of approval via badges, which the contributors can then collect and proudly show-off to their family, friends and potential employers. 
+Using the protocol, DAOs can give various types of badges to their members. These badges are organised in a parent-child relationship -- first, all members receive a membership badge (which is the parent badge), and then members can receive contribution badges (representing their work) or any other type of badge as designed by the community (for example, one-off badges to acknowledge exemplary work). The contribution badges and the custom badges are children to the membership badge.
 
-The badges are [Soulbound](https://vitalik.ca/general/2022/01/26/soulbound.html) ERC-721 tokens. In the current version, each new badge corresponds to a single contribution, however, in the next version, badges will be upgradable (meaning multiple contributions will be tracked in a single badge).
+This architecture lets communities track and visualise their member activity and, on the other hand, lets community members build their portfolio of work through on-chain credentials. These naturally have a higher signalling value than more traditional types of portfolios like resumés.
 
-The rest of this document details the technical specifications and integration process of REP3 Protocol's beta version.
+Badges given through the rep3 platform are also fully interoperable with several web3 tools, especially those that are used for gating resources behind a token. These badges, at a contract level, are custom implmentations of ERC-721 tokens. This is a deliberate decision to balance the trade-off between maintaining the integrity of these badges (w.r.t. the work they represent) and permitting key rotation by users.
+
+The rest of this document details the technical specifications and integration process of our protocol. Please note that this document might be confusing to understand or even have some outdated parts. We are in the process of updating these as we begin to focus on protocol-level integrations in addition to focussing on tool adoption.
+
+As always, do not hesitate at all to reach out to any team member in case you have a question. We usually reply within 12h and will be more than happy to address any questions you may have. 
+
+Have a great day ahead!
 
 ## Installation
 
