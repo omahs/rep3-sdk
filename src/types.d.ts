@@ -2,6 +2,7 @@ export interface IContractAddress {
   pocpManger: string;
   pocpBeacon: string;
   pocpRouter: string;
+  trustedForwarder: string;
 }
 
 export interface IContractAbi {
@@ -22,38 +23,25 @@ export interface IContract {
   pocpBeacon: any | undefined;
 }
 
-export interface RegisterDaoResponse {
-  transactionReceipt: any;
-  communityId: number;
-}
-
-export interface RelayRequestResponse {
-  transactionHash: string;
-}
-
 export interface IPocpConfig {
   biconomyInstance?: any;
   apiKey: number;
   relayURL: string;
 }
 
-export interface relayerData {
-  daoName?: string;
-  approverAddresses?: [string];
-  communityId?: number;
-  claimerAddresses?: [string];
-  ipfsUrls?: [string];
-  arrayOfIdentifiers?: [string];
-  tokenIds?: [number];
+export interface IMembershipVoucherV1 {
+  levelCategory: [number];
+  end: [number] | [];
+  to: [string];
+  tokenUris: string;
+  signature: string;
 }
-
-export interface relayerRequestData {
-  from: string;
-  to: string;
-  nonce: number;
-  value: number;
-  gas: number;
-  data: string | boolean | undefined;
+export interface IMembershipVoucherV2 {
+  data: [number];
+  end: [number] | [];
+  to: [string];
+  tokenUris: string;
+  signature: string;
 }
 
 export type RegisterEventCallback = (

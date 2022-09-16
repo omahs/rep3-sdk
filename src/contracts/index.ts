@@ -24,18 +24,21 @@ class ContractManager {
           pocpManger: deployed_address.POCP_Manager,
           pocpBeacon: deployed_address.POCP_Beacon,
           pocpRouter: deployed_address.POCP_Router,
+          trustedForwarder: '',
         };
       case networks_ENUM.POLYGON:
         return {
           pocpManger: deployed_address_polygon.POCP_Manager,
           pocpBeacon: deployed_address_polygon.POCP_Beacon,
           pocpRouter: deployed_address_polygon.POCP_Router,
+          trustedForwarder: '',
         };
       default:
         return {
           pocpManger: 'not_deployed',
           pocpBeacon: 'not_deployed',
           pocpRouter: 'not_deployed',
+          trustedForwarder: 'not_deployed',
         };
     }
   };
@@ -48,6 +51,7 @@ class ContractManager {
           pocpBeacon: pocpBeaconAbi.abi,
           pocpProxy: pocpProxyAbi.abi,
           pocpRouter: pocpRouterAbi.abi,
+          trustedForwarder: 'not_deployed',
         };
       case networks_ENUM.POLYGON:
         return {
@@ -55,6 +59,7 @@ class ContractManager {
           pocpBeacon: pocpBeaconAbi.abi,
           pocpProxy: pocpProxyAbi.abi,
           pocpRouter: pocpRouterAbi.abi,
+          trustedForwarder: 'not_deployed',
         };
       default:
         return {
@@ -62,6 +67,7 @@ class ContractManager {
           pocpBeacon: pocpBeaconAbi.abi,
           pocpProxy: pocpProxyAbi.abi,
           pocpRouter: pocpRouterAbi.abi,
+          trustedForwarder: 'not_deployed',
         };
     }
   };
