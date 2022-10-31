@@ -41,7 +41,6 @@ class Pocp {
     this.chainId = chainId;
     this.ContractAddress = contractAddressConfig;
     this.packageInitialised = false;
-
     if (config) {
       this.config = config;
       this.biconomyInstance = new this.config.biconomyInstance(
@@ -77,8 +76,11 @@ class Pocp {
             ),
             pocpBeacon: undefined,
           };
-          console.log('Manager Deployed!!!!');
           this.packageInitialised = true;
+          console.log(
+            'Biconomy Initialized successfully!!!!',
+            this.packageInitialised
+          );
         })
         .onEvent(this.biconomyInstance.ERROR, (error: any, message: any) => {
           throw {
@@ -322,6 +324,7 @@ class Pocp {
     tokenUris: string,
     signType: string
   ) => {
+    console.log('Address', to);
     const domain = {
       name: 'REP3Signer',
       version: '0.0.1',
@@ -346,23 +349,29 @@ class Pocp {
       ],
     };
 
-    const voucher = createVoucher(
-      levels,
-      categories,
-      end,
-      to,
-      tokenUris,
-      signType
-    );
-    const signature = await this.signer._signTypedData(
-      domain,
-      signType === 'signTypedDatav2.0' ? typesV2 : typesV1,
-      voucher
-    );
-    return {
-      ...voucher,
-      signature,
-    };
+    try {
+      const voucher = createVoucher(
+        levels,
+        categories,
+        end,
+        to,
+        tokenUris,
+        signType
+      );
+      const signature = await this.signer._signTypedData(
+        domain,
+        signType === 'signTypedDatav2.0' ? typesV2 : typesV1,
+        voucher
+      );
+      const obj = {
+        ...voucher,
+        signature,
+      };
+      return obj;
+    } catch (error) {
+      console.log('error', error);
+      throw error;
+    }
   };
 
   /*
@@ -534,15 +543,6 @@ class Pocp {
         salt: '0x' + this.chainId.toString(16).padStart(64, '0'), //For mainnet replace 80001 with 137
       };
 
-      console.log(
-        proxyAddress,
-        arrayOfMemberTokenId,
-        arrayofBadgeType,
-        arrayOfTokenUri,
-        arrayOfNounce,
-        arrayOfData
-      );
-
       const types = {
         BadgeVoucher: [
           { name: 'index', type: 'uint32' },
@@ -700,12 +700,6 @@ class Pocp {
           subgraphUrl
         );
 
-        console.log(
-          'current approvers are',
-          currentApprovers,
-          contractAddress,
-          subgraphUrl
-        );
         const approverAddressesInLowercase = approverAddresses.map(ele =>
           ele.toLowerCase()
         );
@@ -759,6 +753,87 @@ class Pocp {
       } catch (error) {
         console.log('Catched Error', error);
       }
+    }
+  };
+
+  /*
+   * @param dao's contract address in string
+   * @param claimer's membershipNFT voucher
+   * @param approver address index in number
+   * @returns The transaction receipt is contract call success
+   * @throws "Contract call fails"
+   * @throws "Metamask errors"
+   * @throws "Relayer Api Call errors"
+   */
+  directIssueBadgeBatch = async (
+    contractAddress: string,
+    memberTokenIds: [number],
+    type_: [number],
+    data: [number],
+    arrayOfTokenUri: [string],
+    signType: string,
+    gas: number,
+    gasLimit: number,
+    transactionHashCallback: Function,
+    callbackFunction?: Function
+  ) => {
+    if (this.config) {
+      let contract = new this.networkWeb3.eth.Contract(
+        this.ContractAbi.pocpRouter,
+        this.ContractAddress.pocpRouter
+      );
+      let userAddress = this.signerAddress;
+      const proxyContract = new this.walletWeb3.eth.Contract(
+        signType === 'signTypedDatav2.0'
+          ? this.ContractAbi.pocpProxy
+          : PocpProxyV1,
+        contractAddress
+      );
+      try {
+        let tx = contract.methods
+          .routeRequest({
+            to: contractAddress,
+            gas,
+            value: 0,
+            data: proxyContract.methods
+              .batchIssueBadge(
+                memberTokenIds,
+                type_,
+                data,
+                `${arrayOfTokenUri.toString()}`
+              )
+              .encodeABI(),
+          })
+          .send({
+            from: userAddress,
+            signatureType: this.biconomyInstance.EIP712_SIGN,
+            gasLimit,
+          });
+        tx.on('transactionHash', async function(hash: any) {
+          try {
+            await transactionHashCallback(hash);
+          } catch (error) {
+            throw error;
+          }
+        }).once(
+          'confirmation',
+          async (confirmationNumber: any, receipt: any) => {
+            console.log(receipt);
+            console.log(receipt.transactionHash, confirmationNumber);
+            if (callbackFunction) {
+              try {
+                await callbackFunction(receipt);
+              } catch (error) {
+                throw error;
+              }
+            }
+          }
+        );
+      } catch (error) {
+        console.log('Catched Error', error);
+      }
+    } else {
+      //performs direct contract call if no config file is set
     }
   };
 }
