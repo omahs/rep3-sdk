@@ -800,7 +800,7 @@ class Pocp {
                 memberTokenIds,
                 type_,
                 data,
-                `${arrayOfTokenUri.toString()}`
+                `${arrayOfTokenUri.toString()},`
               )
               .encodeABI(),
           })
@@ -834,6 +834,33 @@ class Pocp {
       }
     } else {
       //performs direct contract call if no config file is set
+      const proxyContract = new this.walletWeb3.eth.Contract(
+        signType === 'signTypedDatav2.0'
+          ? this.ContractAbi.pocpProxy
+          : PocpProxyV1,
+        contractAddress
+      );
+      proxyContract.methods
+        .batchIssueBadge(
+          memberTokenIds,
+          type_,
+          data,
+          `${arrayOfTokenUri.toString()},`
+        )
+        .send({
+          from: this.signerAddress,
+        })
+        .on('receipt', async (receipt: any) => {
+          try {
+            await transactionHashCallback(receipt);
+          } catch (error) {
+            throw error;
+          }
+        })
+        .on('error', function(err: any) {
+          console.error('-------err-------', new Error(err).message);
+          throw err;
+        });
     }
   };
 }
