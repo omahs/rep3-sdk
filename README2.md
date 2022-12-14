@@ -133,7 +133,7 @@ returns a signed voucher (slightly modified). you can store this object in your 
 }
 ```
 
-### 3. Claiming membership NFT
+#### 2. Claiming membership NFT
 `claimMembershipNft` takes the following parameters
 - community contract address
 - signed voucher (see above)
