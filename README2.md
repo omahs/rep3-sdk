@@ -23,7 +23,7 @@ npm i rep3-sdk
 yarn add rep3-sdk
 ```
 
-### Configure rep3 client
+### => Configure rep3 client
 
 ```javascript
 import Rep3 from "rep3-sdk"
@@ -66,7 +66,7 @@ await rep3.createInstance()
 ```
 
 
-### => egister a new community on rep3 (deploy a new ERC 721 contract)
+### => Register a new community on rep3 (deploy a new ERC 721 contract)
 
 Registering community is equivalent to creating a new erc721 collective. Community has `approvers` with permission to dsitribute badges, upgrade/downgrade membership levels etc. Sender of this transaction becomes default `owner` of the community
 
