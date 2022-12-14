@@ -5,10 +5,10 @@ import {
   networks_ENUM,
 } from '../constants';
 
-import pocpMangerAbi from '../contracts/abi/manager/Manager.json';
-import pocpBeaconAbi from '../contracts/abi/beacon/Beacon.json';
-import pocpProxyAbi from '../contracts/abi/proxy/pocpProxy.json';
-import pocpRouterAbi from '../contracts/abi/router/Router.json';
+import mangerAbi from '../contracts/abi/manager/Manager.json';
+import beaconAbi from '../contracts/abi/beacon/Beacon.json';
+import proxyAbi from '../contracts/abi/proxy/Proxy.json';
+import routerAbi from '../contracts/abi/router/Router.json';
 
 class ContractManager {
   network: number;
@@ -21,23 +21,23 @@ class ContractManager {
     switch (this.network) {
       case networks_ENUM.MUMBAI:
         return {
-          pocpManger: deployed_address.POCP_Manager,
-          pocpBeacon: deployed_address.POCP_Beacon,
-          pocpRouter: deployed_address.POCP_Router,
+          manager: deployed_address.Manager,
+          beacon: deployed_address.Beacon,
+          router: deployed_address.Router,
           trustedForwarder: '',
         };
       case networks_ENUM.POLYGON:
         return {
-          pocpManger: deployed_address_polygon.POCP_Manager,
-          pocpBeacon: deployed_address_polygon.POCP_Beacon,
-          pocpRouter: deployed_address_polygon.POCP_Router,
+          manager: deployed_address_polygon.Manager,
+          beacon: deployed_address_polygon.Beacon,
+          router: deployed_address_polygon.Router,
           trustedForwarder: '',
         };
       default:
         return {
-          pocpManger: 'not_deployed',
-          pocpBeacon: 'not_deployed',
-          pocpRouter: 'not_deployed',
+          manager: 'not_deployed',
+          beacon: 'not_deployed',
+          router: 'not_deployed',
           trustedForwarder: 'not_deployed',
         };
     }
@@ -47,26 +47,26 @@ class ContractManager {
     switch (this.network) {
       case networks_ENUM.MUMBAI:
         return {
-          pocpManger: pocpMangerAbi.abi,
-          pocpBeacon: pocpBeaconAbi.abi,
-          pocpProxy: pocpProxyAbi.abi,
-          pocpRouter: pocpRouterAbi.abi,
+          manager: mangerAbi.abi,
+          beacon: beaconAbi.abi,
+          proxy: proxyAbi.abi,
+          router: routerAbi.abi,
           trustedForwarder: 'not_deployed',
         };
       case networks_ENUM.POLYGON:
         return {
-          pocpManger: pocpMangerAbi.abi,
-          pocpBeacon: pocpBeaconAbi.abi,
-          pocpProxy: pocpProxyAbi.abi,
-          pocpRouter: pocpRouterAbi.abi,
+          manager: mangerAbi.abi,
+          beacon: beaconAbi.abi,
+          proxy: proxyAbi.abi,
+          router: routerAbi.abi,
           trustedForwarder: 'not_deployed',
         };
       default:
         return {
-          pocpManger: pocpMangerAbi.abi,
-          pocpBeacon: pocpBeaconAbi.abi,
-          pocpProxy: pocpProxyAbi.abi,
-          pocpRouter: pocpRouterAbi.abi,
+          manager: mangerAbi.abi,
+          beacon: beaconAbi.abi,
+          proxy: proxyAbi.abi,
+          router: routerAbi.abi,
           trustedForwarder: 'not_deployed',
         };
     }

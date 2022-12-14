@@ -5,7 +5,7 @@ import {
   membershipNFTsWithHash,
 } from '../subgraphQuery';
 
-class PocpGetters {
+class Getters {
   subgraphUrl: string;
   constructor(url: string) {
     this.subgraphUrl = url;
@@ -83,4 +83,4 @@ class PocpGetters {
   };
 }
 
-export default PocpGetters;
+export default Getters;

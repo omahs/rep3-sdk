@@ -6,22 +6,22 @@ import {
   IContractFactory,
   IMembershipVoucherV1,
   IMembershipVoucherV2,
-  IPocpConfig,
+  IConfig,
 } from '../types';
 // import { eventListener, EventsEnum } from '../utils/eventListeners';
-import PocpProxyV1 from '../contracts/abi/proxy/pocpProxyV1.json';
+import ProxyV1 from '../contracts/abi/proxy/proxyV1.json';
 import Web3 from 'web3';
 import { createVoucher, generateData } from '../utils/voucherCreater';
 import { getApproversForDao } from '../utils/internalFunctions';
 
-class Pocp {
+class Rep3 {
   signer!: any;
   signerAddress!: string;
-  config!: IPocpConfig;
+  config!: IConfig;
   ContractAbi!: IContractAbi;
   ContractAddress!: IContractAddress;
   chainId: number;
-  PocpInstance!: IContract;
+  Instance!: IContract;
   contractInfo!: IContractFactory;
   ProxyContractInstance!: any;
   biconomyInstance: any;
@@ -34,7 +34,7 @@ class Pocp {
     walletProvider: typeof Web3.givenProvider,
     chainId: number,
     contractAddressConfig: IContractAddress | any,
-    config: IPocpConfig | undefined
+    config: IConfig | undefined
   ) {
     this.signer = getSigner;
     this.walletWeb3 = new Web3(walletProvider);
@@ -69,12 +69,12 @@ class Pocp {
     if (this.config) {
       this.biconomyInstance
         .onEvent(this.biconomyInstance.READY, async () => {
-          this.PocpInstance = {
-            pocpManager: new this.networkWeb3.eth.Contract(
-              this.ContractAbi?.pocpManger,
-              this.ContractAddress?.pocpManger
+          this.Instance = {
+            manager: new this.networkWeb3.eth.Contract(
+              this.ContractAbi?.manager,
+              this.ContractAddress?.manager
             ),
-            pocpBeacon: undefined,
+            beacon: undefined,
           };
           this.packageInitialised = true;
           console.log(
@@ -89,17 +89,17 @@ class Pocp {
           };
         });
 
-      return Pocp;
+      return Rep3;
     } else {
-      this.PocpInstance = {
-        pocpManager: new this.walletWeb3.eth.Contract(
-          this.ContractAbi?.pocpManger,
-          this.ContractAddress?.pocpManger
+      this.Instance = {
+        manager: new this.walletWeb3.eth.Contract(
+          this.ContractAbi?.manager,
+          this.ContractAddress?.manager
         ),
-        pocpBeacon: undefined,
+        beacon: undefined,
       };
 
-      return Pocp;
+      return Rep3;
     }
   };
 
@@ -137,21 +137,21 @@ class Pocp {
       let domainData = {
         name: 'Manager',
         version: '1',
-        verifyingContract: this.ContractAddress.pocpManger,
+        verifyingContract: this.ContractAddress.manager,
         salt: '0x' + this.chainId.toString(16).padStart(64, '0'),
       };
 
-      const nonce: any = await this.PocpInstance?.pocpManager?.methods
+      const nonce: any = await this.Instance?.manager?.methods
         .getNonce(this.signerAddress)
         .call();
 
-      let functionSignature = this.PocpInstance?.pocpManager?.methods
+      let functionSignature = this.Instance?.manager?.methods
         .deployREP3TokenProxy(
           daoName,
           daoSymbol,
           approverAddresses,
-          this.ContractAddress.pocpBeacon,
-          this.ContractAddress.pocpRouter
+          this.ContractAddress.beacon,
+          this.ContractAddress.router
         )
         .encodeABI();
 
@@ -199,7 +199,7 @@ class Pocp {
               'funcSig',
               functionSignature
             );
-            const promiEvent: any = this.PocpInstance?.pocpManager?.methods
+            const promiEvent: any = this.Instance?.manager?.methods
               .executeMetaTransaction(
                 this.signerAddress,
                 functionSignature,
@@ -256,7 +256,7 @@ class Pocp {
               'funcSig',
               functionSignature
             );
-            const promiEvent: any = this.PocpInstance?.pocpManager?.methods
+            const promiEvent: any = this.Instance?.manager?.methods
               .executeMetaTransaction(
                 this.signerAddress,
                 functionSignature,
@@ -395,14 +395,14 @@ class Pocp {
   ) => {
     if (this.config) {
       let contract = new this.networkWeb3.eth.Contract(
-        this.ContractAbi.pocpRouter,
-        this.ContractAddress.pocpRouter
+        this.ContractAbi.router,
+        this.ContractAddress.router
       );
       let userAddress = this.signerAddress;
       const proxyContract = new this.walletWeb3.eth.Contract(
         signType === 'signTypedDatav2.0'
-          ? this.ContractAbi.pocpProxy
-          : PocpProxyV1,
+          ? this.ContractAbi.proxy
+          : ProxyV1,
         contractAddress
       );
       try {
@@ -472,14 +472,14 @@ class Pocp {
   ) => {
     if (this.config) {
       let contract = new this.networkWeb3.eth.Contract(
-        this.ContractAbi.pocpRouter,
-        this.ContractAddress.pocpRouter
+        this.ContractAbi.router,
+        this.ContractAddress.router
       );
 
       let userAddress = this.signerAddress;
 
       const proxyContract = new this.walletWeb3.eth.Contract(
-        this.ContractAbi.pocpProxy,
+        this.ContractAbi.proxy,
         contractAddress
       );
 
@@ -590,14 +590,14 @@ class Pocp {
   ) => {
     if (this.config) {
       let contract = new this.networkWeb3.eth.Contract(
-        this.ContractAbi.pocpRouter,
-        this.ContractAddress.pocpRouter
+        this.ContractAbi.router,
+        this.ContractAddress.router
       );
 
       let userAddress = this.signerAddress;
 
       const proxyContract = new this.walletWeb3.eth.Contract(
-        this.ContractAbi.pocpProxy,
+        this.ContractAbi.proxy,
         contractAddress
       );
 
@@ -683,14 +683,14 @@ class Pocp {
   ) => {
     if (this.config) {
       let contract = new this.networkWeb3.eth.Contract(
-        this.ContractAbi.pocpRouter,
-        this.ContractAddress.pocpRouter
+        this.ContractAbi.router,
+        this.ContractAddress.router
       );
 
       let userAddress = this.signerAddress;
 
       const proxyContract = new this.walletWeb3.eth.Contract(
-        this.ContractAbi.pocpProxy,
+        this.ContractAbi.proxy,
         contractAddress
       );
 
@@ -779,14 +779,14 @@ class Pocp {
   ) => {
     if (this.config) {
       let contract = new this.networkWeb3.eth.Contract(
-        this.ContractAbi.pocpRouter,
-        this.ContractAddress.pocpRouter
+        this.ContractAbi.router,
+        this.ContractAddress.router
       );
       let userAddress = this.signerAddress;
       const proxyContract = new this.walletWeb3.eth.Contract(
         signType === 'signTypedDatav2.0'
-          ? this.ContractAbi.pocpProxy
-          : PocpProxyV1,
+          ? this.ContractAbi.proxy
+          : ProxyV1,
         contractAddress
       );
       try {
@@ -836,8 +836,8 @@ class Pocp {
       //performs direct contract call if no config file is set
       const proxyContract = new this.walletWeb3.eth.Contract(
         signType === 'signTypedDatav2.0'
-          ? this.ContractAbi.pocpProxy
-          : PocpProxyV1,
+          ? this.ContractAbi.proxy
+          : ProxyV1,
         contractAddress
       );
       proxyContract.methods
@@ -865,4 +865,4 @@ class Pocp {
   };
 }
 
-export default Pocp;
+export default Rep3;

@@ -1,7 +1,7 @@
-import Pocp from './pocp';
+import Rep3 from './rep3';
 import ContractManager from './contracts';
-import PocpGetters from './pocpGetters';
+import Getters from './Getters';
 
-export default Pocp;
+export default Rep3;
 
-export { ContractManager, PocpGetters };
+export { ContractManager, Getters };
