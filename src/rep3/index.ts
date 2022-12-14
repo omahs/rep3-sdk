@@ -113,7 +113,7 @@ class Rep3 {
    * @throws "Relayer Api Call errors"
    */
 
-  daoDeploy = async (
+  deploy = async (
     daoName: string,
     daoSymbol: string,
     approverAddresses: [string],
@@ -306,6 +306,17 @@ class Rep3 {
     }
   };
 
+  _generateEnd = (
+    to: [string]): number[] => {
+      let endArray: number[] = [];
+      to.forEach((_, i) => {
+        if (i + 1 < to.length) {
+            endArray.push(i + 1)
+        }
+    })
+      return endArray;
+  }
+
   /*
    * @param dao's contract address in string
    * @param dao's membershipNFT object of type
@@ -319,10 +330,9 @@ class Rep3 {
     proxyAddress: string,
     levels: [number],
     categories: [number],
-    end: [number],
     to: [string],
     tokenUris: string,
-    signType: string
+    signType: string = "signTypedDatav2.0"
   ) => {
     console.log('Address', to);
     const domain = {
@@ -348,6 +358,7 @@ class Rep3 {
         { name: 'tokenUris', type: 'string' },
       ],
     };
+    let end: number[] = this._generateEnd(to);
 
     try {
       const voucher = createVoucher(
@@ -383,11 +394,11 @@ class Rep3 {
    * @throws "Metamask errors"
    * @throws "Relayer Api Call errors"
    */
-  claimMembershipNft = async (
+  claimMembership = async (
     contractAddress: string,
     voucher: IMembershipVoucherV1 | IMembershipVoucherV2,
     approvedAddressIndex: number,
-    signType: string,
+    signType: string = "signTypedDatav2.0",
     gas: number,
     gasLimit: number,
     transactionHashCallback: Function,
@@ -420,7 +431,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function(hash: any) {
+        tx.on('transactionHash', async function (hash: any) {
           try {
             await transactionHashCallback(hash);
           } catch (error) {
@@ -499,7 +510,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function(hash: any) {
+        tx.on('transactionHash', async function (hash: any) {
           try {
             console.log(`Transaction hash is ${hash}`);
             await transactionHashCallback(hash);
@@ -616,7 +627,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function(hash: any) {
+        tx.on('transactionHash', async function (hash: any) {
           try {
             console.log(`Transaction hash is ${hash}`);
             await transactionHashCallback(hash);
@@ -729,7 +740,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function(hash: any) {
+        tx.on('transactionHash', async function (hash: any) {
           try {
             console.log(`Transaction hash is ${hash}`);
             await transactionHashCallback(hash);
@@ -809,7 +820,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function(hash: any) {
+        tx.on('transactionHash', async function (hash: any) {
           try {
             await transactionHashCallback(hash);
           } catch (error) {
@@ -857,7 +868,7 @@ class Rep3 {
             throw error;
           }
         })
-        .on('error', function(err: any) {
+        .on('error', function (err: any) {
           console.error('-------err-------', new Error(err).message);
           throw err;
         });
