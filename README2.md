@@ -33,17 +33,17 @@ import Rep3 from "rep3-sdk"
 // For Polygon mainnet
 chainId = 137
 contractAddressConfig ={
-      pocpManger: "0xDA6F4387C344f1312439E05E9f9580882abA6958",
-      pocpBeacon: "0x083842b3F6739948D26C152C137929E0D3a906b9",
-      pocpRouter: "0xB9Acf5287881160e8CE66b53b507F6350d7a7b1B",
+      manager: "0xDA6F4387C344f1312439E05E9f9580882abA6958",
+      beacon: "0x083842b3F6739948D26C152C137929E0D3a906b9",
+      router: "0xB9Acf5287881160e8CE66b53b507F6350d7a7b1B",
 }
 
 // For Polygon Mumbai
 chainId = 80001
 contractAddressConfig = {
-      pocpManger: "0xf00eAbb380752fed6414f3C12e3D8F976C7D024d",
-      pocpBeacon: "0xDcc7133abBA15B8f4Bf155A372C17744E0941f28",
-      pocpRouter: "0x1C6D20042bfc8474051Aba9FB4Ff85880089A669",
+      manager: "0xf00eAbb380752fed6414f3C12e3D8F976C7D024d",
+      beacon: "0xDcc7133abBA15B8f4Bf155A372C17744E0941f28",
+      router: "0x1C6D20042bfc8474051Aba9FB4Ff85880089A669",
 }
 
 
@@ -51,8 +51,8 @@ contractAddressConfig = {
 import { Biconomy } from "@biconomy/mexa"
 config = {
       biconomyInstance:Biconomy,
-      apiKey: "<api_key_biconomy>", // get it once you setup biconomy
-      relayURL: "<rpc_url>", // get it once you setup biconomy
+      apiKey: "<api_key_biconomy>",    // get it once you setup biconomy
+      relayURL: "<rpc_url>",           // get it once you setup biconomy
 }
 
 // instantiate the client
@@ -75,14 +75,13 @@ await rep3.deploy(
       "<community_name__erc721_name>", 
       "<community_badge_symbol__erc721_symbol>",
       ["<approver_address>", "<approver_address>", ..]
-      callback_function_tx_reciept, //triggered once hash is received
+      callback_function_tx_reciept,        //triggered once hash is received
       callback_function_confirming_events, //triggered once tx is confirmed
 )
 ```
 >Note: `callback_function_tx_reciept` callback will be triggered with transaction reciept as parameter and `callback_function_confirming_events` callback will be triggered with contract emmitted events as parameters
 
-
-`callback_function_tx_reciept` callback functions can be listened for transaction hash which can be used to get the contract address of community
+>Note: callbacks can be configured throughout sdk in other functions as well 
 
 
 ### => Membership badges
@@ -96,6 +95,9 @@ Details on the voucher specs below
 - claim memberships (by claimer)
 -- MembershipVoucher can be claimed by the user/member of the community using `claimMembership`
 
+- upgrade memberships (by approver)
+-- memberships can optionally be upgraded to new levels and categories
+
 #### 1. Approve membership badge
 
 `createMembershipVoucher` takes following parameters:
@@ -108,32 +110,32 @@ Details on the voucher specs below
   
 
 
-> Length of all the arrays and number of hashes MUST be same
+>Note: Length of all the arrays and number of hashes MUST be same
 
 ```javascript
 const signedVoucher:<signedVoucher> = await rep3.createMembershipVoucher(
             contractAddress,
-            [1,2],      // [<Levels of membership represented in 0,1...etc.>]
-            [2,4],      // [<Levels of categories represented in 0,1...etc.>]
-            ["0x0EB...4b53","0x0FG...3s67"],   // [<claimer address>]
+            [1,2],                                    // [<Levels of membership represented in 0,1...etc.>]
+            [2,4],                                    // [<Levels of categories represented in 0,1...etc.>]
+            ["0x0EB...4b53","0x0FG...3s67"],          // [<claimer address>]
             "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",    //<string of metadata_hash seperated by comma>
         )
 ```
-> metadata string MUST have a `,` at the end
+>Note: metadata string MUST have a `,` at the end
 
 returns a signed voucher (slightly modified). you can store this object in your database, ipfs, arweave or even transfer this to the claimer and they should be able to claim the appropriate badge
 
 ```javascript
 {
-    "data":[257, 128], // level and category are packed together as data to save some storage slots
-    "end":[1], // ignore this.. this is internal implementation to save some computation
+    "data":[257, 128],  // level and category are packed together as data to save some storage slots
+    "end":[1],          // ignore this.. this is internal implementation to save some computation
     "to":["0x0EB...4b53","0x0FG...3s67"],
     "tokenUris":"AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",
-    "signature":"0xc7453943fc82666aa5352d7a6fad6ca017eb4ce97d750a7f84604c501d5778ea06e61ffab6f7b56bfba765809376dbc0407639b3c923168f7c4cd7c5543cf28a1c"
+    "signature":"0xc7453943fc...c5543cf28a1c"
 }
 ```
 
-#### 2. Claiming membership NFT
+#### 2. Claim membership
 `claimMembershipNft` takes the following parameters
 - community contract address
 - signed voucher (see above)
@@ -142,51 +144,103 @@ returns a signed voucher (slightly modified). you can store this object in your 
 - callback_function_confirming_events
 
 ```javascript
-
 await rep3.claimMembershipNft(
         contractAddress,
         "<signed_voucher>", 
-        0,  //<index of address in signed voucher>
-        callback_function_tx_reciept, //triggered once hash is received
+        0,                                   //<index of address in signed voucher>
+        callback_function_tx_reciept,        //triggered once hash is received
         callback_function_confirming_events, //triggered once tx is confirmed
   )
 ```
 
 
-### 4. Upgrading membership NFT
-Approver of a dao can upgrade or downgrade membership NFTs of a contributor or a member of dao via `upgradeMembershipNft` by passing dao's contract address, tokenId of the membership NFT, level to which it should be upgraded or downgraded, category to which it should be upgraded or downgraded, ipfs or arweave hash for the NFT. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter. Or you can get the transaction reciept by getting the params of transaction hash callback function.
+#### 3. Upgrade / Downgrade memberships
 
+Memberships can be pnly be upgraded / downgraded by `approver` using `upgradeMembership`
+
+`upgradeMembership` takes the following parameters
+- community contract address
+- membership token id to be upgraded
+- new level of membership
+- new categroy of membership
+- new metadata hash of membership token
+- callback_function_tx_reciept
+- callback_function_confirming_events
 ```javascript
 
-await pocp.upgradeMembershipNft(
+await rep3.upgradeMembership(
         contractAddress,
-        1,  //<membershipNft token id>
-        2,  //<Upgrading level represented in number>
-        3,  //<Upgrading category represented in number>
-      "AdaDsjj...DGdI", //<metadata_hash of upgrading NFT>
-      callback_function_tx_reciept, //triggered once hash is received
+        1,                                 //<membershipNft token id>
+        2,                                 //<Upgrading level represented in number>
+        3,                                 //<Upgrading category represented in number>
+      "adadsjj...dgdi",                    //<metadata_hash of upgrading NFT>
+      callback_function_tx_reciept,        //triggered once hash is received
       callback_function_confirming_events, //triggered once tx is confirmed
     )
 ```
 
-### 5. Claiming Association Badges
-The voucher created by the admin or approver of dao by signing the contribution approval can be used to claim association NFT by the contributor or the member of dao by using `claimContributionBadges`. The function takes proxy contract address of a dao, signed voucher,membershipNFT token Id of contributor, index of address in signed voucher. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter. Or you can get the transaction reciept by getting the params of transaction hash callback function.
+### => Association Badges
+Association badges are the badges that are attached to membership badges. There can be `255` types of association badges starting from 1 (membership badge is of type `0` by default). Association badges can be issued via `BadgeVoucher` where `approver` signs a voucher and `claimer` claims. They can also be directly minted (not recommended as it does not involve consent).
 
-`>Note : It is adviced to keep the length of array same as the array of address. Keep an element in arrayOfData to be 0 as default.`
+
+
+#### 1. Approve association badge
+`createAssociationBadgeVoucher` takes the following parameters
+- community contract address
+- array of member token ids
+- array of badge types
+- comma seperated string of arweave or ipfs metadata hash
+- array of member nonces ([how does nonce work?](#how-does-nonce-work))
+- array of data (optional and can be ignored)
 
 ```javascript
-
-await pocp.claimContributionBadges(
+await rep3.createAssociationBadgeVoucher(
             contractAddress,
-            <Signed_Voucher>,
-            1,    //<membershipNft token id>
-            1,    //<index of address in signed voucher>
-            callback_function_tx_reciept, //triggered once hash is received
+            [1, 2],                                // membership token ids
+            [1, 1],                                // array of badge types
+            "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,", // metadata
+            [1, 3],                                // array of nonces
+        )
+```
+returns a signed voucher similar to membership voucher
+
+```javascript
+{
+    index: 0,
+    memberTokenIds: [1, 2],
+    type_: [1, 1],
+    tokenUri: "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",
+    data: [0, 0], // ignore this
+    nonces: [1, 3],
+    signature: "signature":"0xc7453943fc...c5543cf28a1c"
+}
+```
+
+#### 2. claim association badge
+`claimAssociationBadges` takes the following parameters
+- community contract address
+- signed badge voucher
+- claimer's membership token id
+- index of claimer membership token id in voucher (starting from 0) 
+- callback_function_tx_reciept
+- callback_function_confirming_events
+
+
+```javascript
+await rep3.claimAssociationBadges(
+            contractAddress,
+            "<signed_voucher>",
+            1,                                  //<membershipNft token id>
+            1,                                  //<index of address in signed voucher>
+            callback_function_tx_reciept,       //triggered once hash is received
             callback_function_confirming_events, //triggered once tx is confirmed
         )
 ```
 
-## Some Other Functions 
+
+
+
+### => Utility functions 
 
 There are also some other functions that can, in general, help teams get their usage history of the protocol. These functions (as found in 
 pocp-service-sdk/src/pocpGetters/index.ts) are described below. Let's go through them one-by-one.
@@ -295,6 +349,10 @@ const associationBadgeVariable = {claimer:"0x565CB...e9C7",contractAddress:"0x55
  const customResult = await pocpGetter.subgraphGetterFunction(associationBadgeQuery,associationBadgeVariable)
  
 ```
+
+## Internals
+
+### How does nonce work?
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

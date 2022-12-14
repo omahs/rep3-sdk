@@ -470,7 +470,7 @@ class Rep3 {
    * @throws "Metamask errors"
    * @throws "Relayer Api Call errors"
    */
-  upgradeMembershipNft = async (
+  upgradeMembership = async (
     contractAddress: string,
     tokenId: number,
     level: number,
@@ -538,13 +538,13 @@ class Rep3 {
     }
   };
 
-  createBadgeVoucher = async (
+  createAssociationBadgeVoucher = async (
     proxyAddress: string,
-    arrayOfMemberTokenId: [string],
-    arrayofBadgeType: [number],
-    arrayOfTokenUri: [string],
-    arrayOfNounce: [string],
-    arrayOfData: [number]
+    memberTokenIds: [string],
+    badgeTypes: [number],
+    tokenUri: [string],
+    nonces: [string],
+    data: [number]
   ) => {
     try {
       const domain = {
@@ -567,11 +567,11 @@ class Rep3 {
 
       const badgeVoucher = {
         index: 0,
-        memberTokenIds: arrayOfMemberTokenId,
-        type_: arrayofBadgeType,
-        tokenUri: `${arrayOfTokenUri.toString()},`,
-        data: arrayOfData,
-        nonces: arrayOfNounce,
+        memberTokenIds: memberTokenIds,
+        type_: badgeTypes,
+        tokenUri: `${tokenUri.toString()},`,
+        data: data,
+        nonces: nonces,
       };
 
       const signature = await this.signer._signTypedData(
@@ -589,7 +589,7 @@ class Rep3 {
     }
   };
 
-  claimContributionBadges = async (
+  claimAssociationBadges = async (
     contractAddress: string,
     voucher: any,
     memberTokenId: number,
