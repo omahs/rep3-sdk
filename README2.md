@@ -14,7 +14,7 @@ rep3-protocol enables communities to
 
 ## sdk
 
-### Installation
+### => Installation
 
 Install the package with yarn or npm:
 
@@ -66,7 +66,7 @@ await rep3.createInstance()
 ```
 
 
-### register a new community on rep3 (deploy a new ERC 721 contract)
+### => egister a new community on rep3 (deploy a new ERC 721 contract)
 
 Registering community is equivalent to creating a new erc721 collective. Community has `approvers` with permission to dsitribute badges, upgrade/downgrade membership levels etc. Sender of this transaction becomes default `owner` of the community
 
@@ -85,7 +85,7 @@ await rep3.deploy(
 `callback_function_tx_reciept` callback functions can be listened for transaction hash which can be used to get the contract address of community
 
 
-### Membership badges
+### => Membership badges
 
 rep3-protocol is consent first protocol for soulbound tokens. Direct minting of these tokens is not possible. Every membership badge **must** go through the following steps
 
