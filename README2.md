@@ -23,6 +23,8 @@ npm i rep3-sdk
 yarn add rep3-sdk
 ```
 
+---
+
 ### => Configure rep3 client
 
 ```javascript
@@ -65,6 +67,7 @@ const rep3 = new Rep3(
 await rep3.createInstance()
 ```
 
+---
 
 ### => Register a new community on rep3 (deploy a new ERC 721 contract)
 
@@ -83,6 +86,7 @@ await rep3.deploy(
 
 >Note: callbacks can be configured throughout sdk in other functions as well 
 
+---
 
 ### => Membership badges
 
@@ -178,6 +182,7 @@ await rep3.upgradeMembership(
       callback_function_confirming_events, //triggered once tx is confirmed
     )
 ```
+---
 
 ### => Association Badges
 Association badges are the badges that are attached to membership badges. There can be `255` types of association badges starting from 1 (membership badge is of type `0` by default). Association badges can be issued via `BadgeVoucher` where `approver` signs a voucher and `claimer` claims. They can also be directly minted (not recommended as it does not involve consent).
@@ -237,13 +242,12 @@ await rep3.claimAssociationBadges(
         )
 ```
 
-
-
+---
 
 ### => Utility functions 
 
-There are also some other functions that can, in general, help teams get their usage history of the protocol. These functions (as found in 
-pocp-service-sdk/src/pocpGetters/index.ts) are described below. Let's go through them one-by-one.
+Utitlity functions are getter function that get the data from subgraphs
+
 >Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
 
 >Note: As Rep3 Protocol makes uses of subgraphs for quering contract. Devs can write their custom logics on rep3 subgraph
@@ -254,79 +258,89 @@ pocp-service-sdk/src/pocpGetters/index.ts) are described below. Let's go through
       matic https://api.thegraph.com/subgraphs/name/eth-jashan/rep3-matic
 ```
 
-### 1. Initialize pocp getter instance
+#### 1. Initialization
 The PocpGetters class is initiated by the subgraph url.
 
 ```javascript
- import { PocpGetters } from "pocp-service-sdk"
+ import { Rep3Getters } from "rep3-sdk"
       
- const pocpGetter = new PocpGetters(<Mumbai-Subgraph-url/Matic-Subgraph-url>)
+ const rep3Getter = new Rep3Getters(<Mumbai-Subgraph-url/Matic-Subgraph-url>)
 
 ```
-### 2. Get dao contract address from transaction hash
-The `getdaoInfoForHash` getter function takes the transaction hash of `daoDeploy`, and returns the details of dao in contract.
+#### 2. Get community contract address from transaction hash
+
+`getCommunutyFromTx` takes the following parameters
+- transaction hash (from `deploy`)
 
 ```javascript
- const daoInfo:<DaoDetails> = await pocpGetter.getdaoInfoForHash(
-       `0xfsfs...sfaiee` // transaction hash
+ const community = await rep3Getter.getCommunutyFromTx(
+       `0xfsfs...sfaiee`         // transaction hash
  )
- 
-      // returns value DaoDetail
-      {
-        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
-        "name": "",
-        "symbol": "",
-        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
-      },
- 
+```
+and returns the details of community contract
+```javascript
+{
+      "id": "0x00c51890d...249f60f5f",                      // community contract address
+      "name": "<community_name__erc721_name>",
+      "symbol": "<community_badge_symbol__erc721_symbol>",
+      "txHash": "0x104d4adb421....fe451971505607e419fd6f3"
+}
 ```
 
-### 3. Get membershipNft from transaction hash
-The `getMembershipNftsForHash` getter function takes the transaction hash of `claimMembershipNft` function , and returns the details of membership NFTs.
+#### 3. Get membership from transaction hash
+`getMembershipFromTx` takes the following parameters
+- transaction hash (from `claimMembershipNft` )
 
 ```javascript
       
- const membershipNft<MembershipNftDetaails> = await pocpGetter.getMembershipNftsForHash(
+ const membership = await rep3Getter.getMembershipFromTx(
        `0xfje...vdvd` // transaction hash
  )
-      // returns value MembershipNftDetail
-      {
-        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
-        "name": "",
-        "symbol": "",
-        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
-      },
-
- 
+ ```
+ and returns the membership details
+ ```javascript
+{
+      "id": "0x00c5189...b8b59249f60f5f",                 // proxy contract address
+      "name": "",
+      "symbol": "",
+      "txHash": "0x104d4adb42...e451971505607e419fd6f3"
+},
 ```
 
-### 4. Get membershipNft for a claimer address and contract address
-The `membershipNftWithClaimerOfDao` getter function takes the `claimer address` and `contract address` of `daoDeploy`, and returns the array of details of membership NFTs.
+#### 4. Get membership for a claimer address and contract address
+`membershipFromClaimerCommunity` takes the following parameters
+- claimer address
+- community contract address
 
-```javascript
-      
- const membershipNfts = await pocpGetter.membershipNftWithClaimerOfDao(<Claimer-Address>,<Contract-Address>)
- 
-      // returns value MembershipNftDetails
-      [{
-        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
-        "name": "",
-        "symbol": "",
-        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
-      }{
-        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
-        "name": "",
-        "symbol": "",
-        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
-      }],
- 
+```javascript 
+ const membershipNfts = await pocpGetter.membershipFromClaimerCommunity("<claimer_address>","<contract_address>")
 ```
 
-### 4. Custom Query for getters
-The `getForCustomQuery` getter function takes the `custom the graph protcol query` and `object of variables`, and returns the array of details of membership NFTs.
+returns array of membership details
+```javascript
+ [{
+      "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
+      "name": "",
+      "symbol": "",
+      "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
+}{
+      "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
+      "name": "",
+      "symbol": "",
+      "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
+}],
+
+```
+
+### 4. Custom Query
+
+Developers can send custom graph query using `getForCustomQuery`
+
+`getForCustomQuery` takes the following parameters 
+- graph protcol query` and `
+- object of variables
 
 ```javascript
-
 const associationBadgeQuery = `
 query($claimer: String,$contractAddress:String ) {
   associationBadges(where:{claimer:$claimer,contractAddress:$contractAddress}){
@@ -346,13 +360,22 @@ query($claimer: String,$contractAddress:String ) {
 
 const associationBadgeVariable = {claimer:"0x565CB...e9C7",contractAddress:"0x5544...fdq31" }
       
- const customResult = await pocpGetter.subgraphGetterFunction(associationBadgeQuery,associationBadgeVariable)
+const customResult = await pocpGetter.subgraphGetterFunction(associationBadgeQuery,associationBadgeVariable)
  
 ```
 
 ## Internals
 
 ### How does nonce work?
+
+Nonces are used as anti-replay attack mechanism, so that same voucher can not be claimed more than once. Contract stores a mapping of membership token id and last used nonce which can be obtained via contract call (we'll create a simpler api for this very soon in the sdk itself)
+
+Vouchers approved by approvers should have different nonce. for eg
+
+If current nonce from contract is 1, voucher signed for the user should be 2 and next one should be 3 (even if first voucher with nonce 2 is not claimed. We expect implementors to create a mechanism to manage nonces, although soon we'll open up API support which will abstract out the implementation).
+
+>Note: Member is expected to claim voucher with nonce 2 first and then 3. If member claims voucher with nonce 3 before voucher with nonce 2, voucher nonce 2 will be discarded and can not be claimed.
+
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

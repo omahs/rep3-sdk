@@ -16,7 +16,7 @@ class Getters {
    * @returns Array of tokens
    * @throws "Error"
    */
-  getdaoInfoForHash = async (txHash: string) => {
+  getCommunutyFromTx = async (txHash: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
         daoWithTxHash,
@@ -31,7 +31,7 @@ class Getters {
     }
   };
 
-  membershipNftWithClaimerOfDao = async (
+  membershipFromClaimerCommunity = async (
     claimer: string,
     contractAddress: string
   ) => {
@@ -50,7 +50,7 @@ class Getters {
     }
   };
 
-  getMembershipNftsForHash = async (id: string) => {
+  getMembershipFromTx = async (id: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
         membershipNFTsWithHash,
