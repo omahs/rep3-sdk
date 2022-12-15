@@ -332,7 +332,7 @@ returns array of membership details
 
 ```
 
-### 4. Custom Query
+#### 4. Custom Query
 
 Developers can send custom graph query using `getForCustomQuery`
 
@@ -364,9 +364,9 @@ const customResult = await pocpGetter.subgraphGetterFunction(associationBadgeQue
  
 ```
 
-## Internals
+### => Internals
 
-### How does nonce work?
+#### How does nonce work?
 
 Nonces are used as anti-replay attack mechanism, so that same voucher can not be claimed more than once. Contract stores a mapping of membership token id and last used nonce which can be obtained via contract call (we'll create a simpler api for this very soon in the sdk itself)
 
@@ -377,5 +377,5 @@ If current nonce from contract is 1, voucher signed for the user should be 2 and
 >Note: Member is expected to claim voucher with nonce 2 first and then 3. If member claims voucher with nonce 3 before voucher with nonce 2, voucher nonce 2 will be discarded and can not be claimed.
 
 
-## License
+### => License
 [MIT](https://choosealicense.com/licenses/mit/)
