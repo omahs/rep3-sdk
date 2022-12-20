@@ -1,15 +1,15 @@
 export interface IContractAddress {
-  pocpManger: string;
-  pocpBeacon: string;
-  pocpRouter: string;
+  manager: string;
+  beacon: string;
+  router: string;
   trustedForwarder: string;
 }
 
 export interface IContractAbi {
-  pocpManger: string | any;
-  pocpBeacon: string | any;
-  pocpProxy: string | any;
-  pocpRouter: string | any;
+  manager: string | any;
+  beacon: string | any;
+  proxy: string | any;
+  router: string | any;
 }
 
 export interface IContractFactory {
@@ -19,11 +19,11 @@ export interface IContractFactory {
 }
 
 export interface IContract {
-  pocpManager: any | undefined;
-  pocpBeacon: any | undefined;
+  manager: any | undefined;
+  beacon: any | undefined;
 }
 
-export interface IPocpConfig {
+export interface IConfig {
   biconomyInstance?: any;
   apiKey: number;
   relayURL: string;

@@ -1,173 +1,253 @@
-# POCP Service SDK
+# rep3 protocol SDK
 
-The Proof of Contribution Protocol (or PoCP) is the beta version of rep3's credentialing protocol. The rep3 DAO tool (live at https://app.rep3.gg/) is one possible implementation of the protocol to facilitate better member and contribution management for DAOs.
+`rep3-sdk` is the ts package for projects to integrate rep3-protocol and services in their projects. This documentation will provide various ways and code snippets for the same. To know more about the protocol head over to our [docs](https://docs.rep3.gg/)
 
-Using the protocol, DAOs can give various types of badges to their members. These badges are organised in a parent-child relationship -- first, all members receive a membership badge (which is the parent badge), and then members can receive contribution badges (representing their work) or any other type of badge as designed by the community (for example, one-off badges to acknowledge exemplary work). The contribution badges and the custom badges are children to the membership badge.
 
-This architecture lets communities track and visualise their member activity and, on the other hand, lets community members build their portfolio of work through on-chain credentials. These naturally have a higher signalling value than more traditional types of portfolios like resumés.
+## rep3 protocol
+rep3-protocol enables communities to
+- create and distribute membership badges
+- create and distribute contribution/participation badges with membership badge as owner
+- distribute consent-first soulbound ERC721s
+- and more..
 
-Badges given through the rep3 platform are also fully interoperable with several web3 tools, especially those that are used for gating resources behind a token. These badges, at a contract level, are custom implmentations of ERC-721 tokens. This is a deliberate decision to balance the trade-off between maintaining the integrity of these badges (w.r.t. the work they represent) and permitting key rotation by users.
 
-The rest of this document details the technical specifications and integration process of our protocol. Please note that this document might be confusing to understand or even have some outdated parts. We are in the process of updating these as we begin to focus on protocol-level integrations in addition to focussing on tool adoption.
 
-As always, do not hesitate at all to reach out to any team member in case you have a question. We usually reply within 12h and will be more than happy to address any questions you may have. 
+## sdk
 
-Have a great day ahead!
-
-## Installation
+### => Installation
 
 Install the package with yarn or npm:
 
 ```bash
-npm install pocp-service-sdk
-yarn add pocp-service-sdk
+npm i rep3-sdk
+yarn add rep3-sdk
 ```
 
-## Getting Started
+---
 
-The three main functions of this protocol are registering community on the protocol, approving and claiming membership badges and issuing contribution/appreciation/pariticipation badges on memberships. These functions (as found in pocp-service-sdk/src/pocp/index.ts/) are described below. Let's go through them one-by-one. 
->Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
-
-### 1. Instantiating Pocp
->Note: `callback_function_tx_reciept` in many functions sends transaction reciept as params, and `callback_function_confirming_events` send contract emmitted events as params
+### => Configure rep3 client
 
 ```javascript
-import Pocp from "pocp-service-sdk"
-
-# add relyer_token for a gasless transaction
+import Rep3 from "rep3-sdk"
 
 
+// configure chains
 // For Polygon mainnet
 chainId = 137
 contractAddressConfig ={
-      pocpManger: "0xDA6F4387C344f1312439E05E9f9580882abA6958",
-      pocpBeacon: "0x083842b3F6739948D26C152C137929E0D3a906b9",
-      pocpRouter: "0xB9Acf5287881160e8CE66b53b507F6350d7a7b1B",
+      manager: "0xDA6F4387C344f1312439E05E9f9580882abA6958",
+      beacon: "0x083842b3F6739948D26C152C137929E0D3a906b9",
+      router: "0xB9Acf5287881160e8CE66b53b507F6350d7a7b1B",
 }
 
 // For Polygon Mumbai
 chainId = 80001
 contractAddressConfig = {
-      pocpManger: "0xf00eAbb380752fed6414f3C12e3D8F976C7D024d",
-      pocpBeacon: "0xDcc7133abBA15B8f4Bf155A372C17744E0941f28",
-      pocpRouter: "0x1C6D20042bfc8474051Aba9FB4Ff85880089A669",
+      manager: "0xf00eAbb380752fed6414f3C12e3D8F976C7D024d",
+      beacon: "0xDcc7133abBA15B8f4Bf155A372C17744E0941f28",
+      router: "0x1C6D20042bfc8474051Aba9FB4Ff85880089A669",
 }
 
+
+// Biconomy if you want use their relayer service for gasless experience on your project https://www.biconomy.io/
 import { Biconomy } from "@biconomy/mexa"
 config = {
       biconomyInstance:Biconomy,
-      apiKey: <api-key-biconomy>,
-      relayURL: <rpc-url>,
+      apiKey: "<api_key_biconomy>",    // get it once you setup biconomy
+      relayURL: "<rpc_url>",           // get it once you setup biconomy
 }
 
-const pocp = new Pocp(
+// instantiate the client
+
+const rep3 = new Rep3(
       signer, null, walletProvider, chainId,
       contractAddressConfig
       config
 )
-await pocp.createInstance()
-
+await rep3.createInstance()
 ```
 
+---
 
+### => Register a new community on rep3 (deploy a new ERC 721 contract)
 
-### 1. Registering community
-The first step to using this protocol is registering community on the protocol. This is done by the community admin(s) using the `daoDeploy` function. This takes the name of the DAO and an array of owners' addresses as parameters. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter.
-
->Note: callback functions can be listened for transaction hash which can be used to get the contract address of a dao.
+Registering community is equivalent to creating a new erc721 collective. Community has `approvers` with permission to dsitribute badges, upgrade/downgrade membership levels etc. Sender of this transaction becomes default `owner` of the community
 
 ```javascript
-
-await pocp.daoDeploy(
-      "<YourDAOName>", 
-      "<YourDAOERC721Symbol>",
-      ["<approverAddress_1>", "<approverAddress_2>", ..]
-      "0x083842b3F6739948D26C152C137929E0D3a906b9 (for mainnet) / 0xDcc7133abBA15B8f4Bf155A372C17744E0941f28 (for mumbai)",
-      "0xB9Acf5287881160e8CE66b53b507F6350d7a7b1B (for mainnet) / 0x1C6D20042bfc8474051Aba9FB4Ff85880089A669 (for mumbai)",,
-      callback_function_tx_reciept, //triggered once hash is received
+await rep3.deploy(
+      "<community_name__erc721_name>", 
+      "<community_badge_symbol__erc721_symbol>",
+      ["<approver_address>", "<approver_address>", ..]
+      callback_function_tx_reciept,        //triggered once hash is received
       callback_function_confirming_events, //triggered once tx is confirmed
 )
-
 ```
+>Note: `callback_function_tx_reciept` callback will be triggered with transaction reciept as parameter and `callback_function_confirming_events` callback will be triggered with contract emmitted events as parameters
+
+>Note: callbacks can be configured throughout sdk in other functions as well 
+
+---
+
+### => Membership badges
+
+rep3-protocol is consent first protocol for soulbound tokens. Direct minting of these tokens is not possible. Every membership badge **must** go through the following steps
+
+- approve membership (by approver)
+-- Membership badges can only be approved by approvers defined while deploying the community contract. Approval creates a `MembershipVoucher` based on [EIP-712](https://eips.ethereum.org/EIPS/eip-712) using `createMembershipVoucher`. 
+Details on the voucher specs below
+
+- claim memberships (by claimer)
+-- MembershipVoucher can be claimed by the user/member of the community using `claimMembership`
+
+- upgrade memberships (by approver)
+-- memberships can optionally be upgraded to new levels and categories
+
+#### 1. Approve membership badge
+
+`createMembershipVoucher` takes following parameters:
+
+- community contract address
+- array of levels as integer array
+- array of categories as integer array
+- array of member/claimer address
+- comma seperated string of arweave or ipfs metadata hash
+  
 
 
-### 2. Approving membership
-Before contributors can mint the badge to their addresses, the community admins must "ready" the badge for claiming. This is done via the `createMembershipVoucher` function. It takes the proxy contract address of a dao, array of levels in integer,array of category in integer, refer to note below for array of end,array of contributor's address, string of arweave or ipfs metadata hash seperating it by comma. For supporting back versioning of rep3 protocol, we have sign type version for different updates. The current rep3 Protocol supports "signTypedDatav2.0" and should be passed as a params.
->Note for end array : In example below first 3 address from contributors address have to be approved for level1 and category2 so the first element       in the end array is 2 and as the remaining combination i.e level2 and category4 is for remaining 2 address as it's ending address is at the end         of contributors array the second element in end array is 4. If all arrays refers to same level and category, send it as a empty array
+>Note: Length of all the arrays and number of hashes MUST be same
 
 ```javascript
-const signedVoucher:<signedVoucher> = await pocp.createMembershipVoucher(
+const signedVoucher:<signedVoucher> = await rep3.createMembershipVoucher(
             contractAddress,
-            [1,2],      // [<Levels of membership represented in 0,1...etc.>]
-            [2,4],      // [<Levels of categories represented in 0,1...etc.>]
-            [2,4],      // refer to note section above
-            ["0x0EB...4b53","0x0FG...3s67","0x0RT...3dfr3","0x0WE...3ar4T","0x0re4...3d534"],   // [<claimer address>]
+            [1,2],                                    // [<Levels of membership represented in 0,1...etc.>]
+            [2,4],                                    // [<Levels of categories represented in 0,1...etc.>]
+            ["0x0EB...4b53","0x0FG...3s67"],          // [<claimer address>]
             "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",    //<string of metadata_hash seperated by comma>
-            "signTypedDatav2.0"     //<Type of signature version>
         )
- // returns object of signed voucher
-      {
-            "data":[257],
-            "end":[],
-            "to":["0x2669B5e41a56989EE58a2195f2bC54337c48c670"],
-            "tokenUris":"GrMjwgeaivFF0kkculkkzGeoxJUD0ChSiBpXc8DPPME,",
-      "signature":"0xc7453943fc82666aa5352d7a6fad6ca017eb4ce97d750a7f84604c501d5778ea06e61ffab6f7b56bfba765809376dbc0407639b3c923168f7c4cd7c5543cf28a1c"
-      }
 ```
+>Note: metadata string MUST have a `,` at the end
 
-### 3. Claiming membership NFT
-The voucher created by the admin or approver of dao by signing the membership approval can be used to claim membership NFT by the contributor or the member of dao by using `claimMembershipNft`. The function takes proxy contract address of a dao, signed voucher, index of address in signed voucher, version of sign used while approving membership. In case you want to listen to the event emitted, you can pass it as an callbackFunction which takes the event emitted as its parameter. Or you can get the transaction reciept by getting the params of transaction hash callback function.
+returns a signed voucher (slightly modified). you can store this object in your database, ipfs, arweave or even transfer this to the claimer and they should be able to claim the appropriate badge
 
 ```javascript
+{
+    "data":[257, 128],  // level and category are packed together as data to save some storage slots
+    "end":[1],          // ignore this.. this is internal implementation to save some computation
+    "to":["0x0EB...4b53","0x0FG...3s67"],
+    "tokenUris":"AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",
+    "signature":"0xc7453943fc...c5543cf28a1c"
+}
+```
 
-await pocp.claimMembershipNft(
+#### 2. Claim membership
+`claimMembershipNft` takes the following parameters
+- community contract address
+- signed voucher (see above)
+- index of claimer address in voucher (starting from 0)
+- callback_function_tx_reciept
+- callback_function_confirming_events
+
+```javascript
+await rep3.claimMembershipNft(
         contractAddress,
-        <Signed-Voucher>,
-        0,  //<index of address in signed voucher>
-        "signTypedDatav2.0",  //<Type of signature version>
-        callback_function_tx_reciept, //triggered once hash is received
-       callback_function_confirming_events, //triggered once tx is confirmed
+        "<signed_voucher>", 
+        0,                                   //<index of address in signed voucher>
+        callback_function_tx_reciept,        //triggered once hash is received
+        callback_function_confirming_events, //triggered once tx is confirmed
   )
 ```
 
 
-### 4. Upgrading membership NFT
-Approver of a dao can upgrade or downgrade membership NFTs of a contributor or a member of dao via `upgradeMembershipNft` by passing dao's contract address, tokenId of the membership NFT, level to which it should be upgraded or downgraded, category to which it should be upgraded or downgraded, ipfs or arweave hash for the NFT. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter. Or you can get the transaction reciept by getting the params of transaction hash callback function.
+#### 3. Upgrade / Downgrade memberships
 
+Memberships can be pnly be upgraded / downgraded by `approver` using `upgradeMembership`
+
+`upgradeMembership` takes the following parameters
+- community contract address
+- membership token id to be upgraded
+- new level of membership
+- new categroy of membership
+- new metadata hash of membership token
+- callback_function_tx_reciept
+- callback_function_confirming_events
 ```javascript
 
-await pocp.upgradeMembershipNft(
+await rep3.upgradeMembership(
         contractAddress,
-        1,  //<membershipNft token id>
-        2,  //<Upgrading level represented in number>
-        3,  //<Upgrading category represented in number>
-      "AdaDsjj...DGdI", //<metadata_hash of upgrading NFT>
-      callback_function_tx_reciept, //triggered once hash is received
+        1,                                 //<membershipNft token id>
+        2,                                 //<Upgrading level represented in number>
+        3,                                 //<Upgrading category represented in number>
+      "adadsjj...dgdi",                    //<metadata_hash of upgrading NFT>
+      callback_function_tx_reciept,        //triggered once hash is received
       callback_function_confirming_events, //triggered once tx is confirmed
     )
 ```
+---
 
-### 5. Claiming Association Badges
-The voucher created by the admin or approver of dao by signing the contribution approval can be used to claim association NFT by the contributor or the member of dao by using `claimContributionBadges`. The function takes proxy contract address of a dao, signed voucher,membershipNFT token Id of contributor, index of address in signed voucher. In case you want to listen to the event emitted, you can pass it as an  callbackFunction which takes the event emitted as its parameter. Or you can get the transaction reciept by getting the params of transaction hash callback function.
+### => Association Badges
+Association badges are the badges that are attached to membership badges. There can be `255` types of association badges starting from 1 (membership badge is of type `0` by default). Association badges can be issued via `BadgeVoucher` where `approver` signs a voucher and `claimer` claims. They can also be directly minted (not recommended as it does not involve consent).
 
-`>Note : It is adviced to keep the length of array same as the array of address. Keep an element in arrayOfData to be 0 as default.`
+
+
+#### 1. Approve association badge
+`createAssociationBadgeVoucher` takes the following parameters
+- community contract address
+- array of member token ids
+- array of badge types
+- comma seperated string of arweave or ipfs metadata hash
+- array of member nonces ([how does nonce work?](#how-does-nonce-work))
+- array of data (optional and can be ignored)
 
 ```javascript
-
-await pocp.claimContributionBadges(
+await rep3.createAssociationBadgeVoucher(
             contractAddress,
-            <Signed_Voucher>,
-            1,    //<membershipNft token id>
-            1,    //<index of address in signed voucher>
-            callback_function_tx_reciept, //triggered once hash is received
+            [1, 2],                                // membership token ids
+            [1, 1],                                // array of badge types
+            "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,", // metadata
+            [1, 3],                                // array of nonces
+        )
+```
+returns a signed voucher similar to membership voucher
+
+```javascript
+{
+    index: 0,
+    memberTokenIds: [1, 2],
+    type_: [1, 1],
+    tokenUri: "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",
+    data: [0, 0], // ignore this
+    nonces: [1, 3],
+    signature: "signature":"0xc7453943fc...c5543cf28a1c"
+}
+```
+
+#### 2. claim association badge
+`claimAssociationBadges` takes the following parameters
+- community contract address
+- signed badge voucher
+- claimer's membership token id
+- index of claimer membership token id in voucher (starting from 0) 
+- callback_function_tx_reciept
+- callback_function_confirming_events
+
+
+```javascript
+await rep3.claimAssociationBadges(
+            contractAddress,
+            "<signed_voucher>",
+            1,                                  //<membershipNft token id>
+            1,                                  //<index of address in signed voucher>
+            callback_function_tx_reciept,       //triggered once hash is received
             callback_function_confirming_events, //triggered once tx is confirmed
         )
 ```
 
-## Some Other Functions 
+---
 
-There are also some other functions that can, in general, help teams get their usage history of the protocol. These functions (as found in 
-pocp-service-sdk/src/pocpGetters/index.ts) are described below. Let's go through them one-by-one.
+### => Utility functions 
+
+Utitlity functions are getter function that get the data from subgraphs
+
 >Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
 
 >Note: As Rep3 Protocol makes uses of subgraphs for quering contract. Devs can write their custom logics on rep3 subgraph
@@ -178,79 +258,89 @@ pocp-service-sdk/src/pocpGetters/index.ts) are described below. Let's go through
       matic https://api.thegraph.com/subgraphs/name/eth-jashan/rep3-matic
 ```
 
-### 1. Initialize pocp getter instance
-The PocpGetters class is initiated by the subgraph url.
+#### 1. Initialization
+The Rep3Getters class is initiated by the subgraph url.
 
 ```javascript
- import { PocpGetters } from "pocp-service-sdk"
+ import { Rep3Getters } from "rep3-sdk"
       
- const pocpGetter = new PocpGetters(<Mumbai-Subgraph-url/Matic-Subgraph-url>)
+ const rep3Getter = new Rep3Getters(<Mumbai-Subgraph-url/Matic-Subgraph-url>)
 
 ```
-### 2. Get dao contract address from transaction hash
-The `getdaoInfoForHash` getter function takes the transaction hash of `daoDeploy`, and returns the details of dao in contract.
+#### 2. Get community contract address from transaction hash
+
+`getCommunutyFromTx` takes the following parameters
+- transaction hash (from `deploy`)
 
 ```javascript
- const daoInfo:<DaoDetails> = await pocpGetter.getdaoInfoForHash(
-       `0xfsfs...sfaiee` // transaction hash
+ const community = await rep3Getter.getCommunutyFromTx(
+       `0xfsfs...sfaiee`         // transaction hash
  )
- 
-      // returns value DaoDetail
-      {
-        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
-        "name": "",
-        "symbol": "",
-        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
-      },
- 
+```
+and returns the details of community contract
+```javascript
+{
+      "id": "0x00c51890d...249f60f5f",                      // community contract address
+      "name": "<community_name__erc721_name>",
+      "symbol": "<community_badge_symbol__erc721_symbol>",
+      "txHash": "0x104d4adb421....fe451971505607e419fd6f3"
+}
 ```
 
-### 3. Get membershipNft from transaction hash
-The `getMembershipNftsForHash` getter function takes the transaction hash of `claimMembershipNft` function , and returns the details of membership NFTs.
+#### 3. Get membership from transaction hash
+`getMembershipFromTx` takes the following parameters
+- transaction hash (from `claimMembershipNft` )
 
 ```javascript
       
- const membershipNft<MembershipNftDetaails> = await pocpGetter.getMembershipNftsForHash(
+ const membership = await rep3Getter.getMembershipFromTx(
        `0xfje...vdvd` // transaction hash
  )
-      // returns value MembershipNftDetail
-      {
-        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
-        "name": "",
-        "symbol": "",
-        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
-      },
-
- 
+ ```
+ and returns the membership details
+ ```javascript
+{
+      "id": "0x00c5189...b8b59249f60f5f",                 // proxy contract address
+      "name": "",
+      "symbol": "",
+      "txHash": "0x104d4adb42...e451971505607e419fd6f3"
+},
 ```
 
-### 4. Get membershipNft for a claimer address and contract address
-The `membershipNftWithClaimerOfDao` getter function takes the `claimer address` and `contract address` of `daoDeploy`, and returns the array of details of membership NFTs.
+#### 4. Get membership for a claimer address and contract address
+`membershipFromClaimerCommunity` takes the following parameters
+- claimer address
+- community contract address
 
-```javascript
-      
- const membershipNfts = await pocpGetter.membershipNftWithClaimerOfDao(<Claimer-Address>,<Contract-Address>)
- 
-      // returns value MembershipNftDetails
-      [{
-        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
-        "name": "",
-        "symbol": "",
-        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
-      }{
-        "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
-        "name": "",
-        "symbol": "",
-        "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
-      }],
- 
+```javascript 
+ const membershipNfts = await rep3Getter.membershipFromClaimerCommunity("<claimer_address>","<contract_address>")
 ```
 
-### 4. Custom Query for getters
-The `getForCustomQuery` getter function takes the `custom the graph protcol query` and `object of variables`, and returns the array of details of membership NFTs.
+returns array of membership details
+```javascript
+ [{
+      "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
+      "name": "",
+      "symbol": "",
+      "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
+}{
+      "id": "0x00c51890d6c9da0a7e85ed6682b8b59249f60f5f", // proxy contract address
+      "name": "",
+      "symbol": "",
+      "txHash": "0x104d4adb421cb0b3e81b05549488e1fd3f75132bafe451971505607e419fd6f3"
+}],
+
+```
+
+#### 4. Custom Query
+
+Developers can send custom graph query using `getForCustomQuery`
+
+`getForCustomQuery` takes the following parameters 
+- graph protcol query` and `
+- object of variables
 
 ```javascript
-
 const associationBadgeQuery = `
 query($claimer: String,$contractAddress:String ) {
   associationBadges(where:{claimer:$claimer,contractAddress:$contractAddress}){
@@ -270,9 +360,22 @@ query($claimer: String,$contractAddress:String ) {
 
 const associationBadgeVariable = {claimer:"0x565CB...e9C7",contractAddress:"0x5544...fdq31" }
       
- const customResult = await pocpGetter.subgraphGetterFunction(associationBadgeQuery,associationBadgeVariable)
+const customResult = await rep3Getter.subgraphGetterFunction(associationBadgeQuery,associationBadgeVariable)
  
 ```
 
-## License
+### => Internals
+
+#### How does nonce work?
+
+Nonces are used as anti-replay attack mechanism, so that same voucher can not be claimed more than once. Contract stores a mapping of membership token id and last used nonce which can be obtained via contract call (we'll create a simpler api for this very soon in the sdk itself)
+
+Vouchers approved by approvers should have different nonce. for eg
+
+If current nonce from contract is 1, voucher signed for the user should be 2 and next one should be 3 (even if first voucher with nonce 2 is not claimed. We expect implementors to create a mechanism to manage nonces, although soon we'll open up API support which will abstract out the implementation).
+
+>Note: Member is expected to claim voucher with nonce 2 first and then 3. If member claims voucher with nonce 3 before voucher with nonce 2, voucher nonce 2 will be discarded and can not be claimed.
+
+
+### => License
 [MIT](https://choosealicense.com/licenses/mit/)

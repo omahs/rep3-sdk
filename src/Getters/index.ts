@@ -5,7 +5,7 @@ import {
   membershipNFTsWithHash,
 } from '../subgraphQuery';
 
-class PocpGetters {
+class Getters {
   subgraphUrl: string;
   constructor(url: string) {
     this.subgraphUrl = url;
@@ -16,7 +16,7 @@ class PocpGetters {
    * @returns Array of tokens
    * @throws "Error"
    */
-  getdaoInfoForHash = async (txHash: string) => {
+  getCommunutyFromTx = async (txHash: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
         daoWithTxHash,
@@ -31,7 +31,7 @@ class PocpGetters {
     }
   };
 
-  membershipNftWithClaimerOfDao = async (
+  membershipFromClaimerCommunity = async (
     claimer: string,
     contractAddress: string
   ) => {
@@ -50,7 +50,7 @@ class PocpGetters {
     }
   };
 
-  getMembershipNftsForHash = async (id: string) => {
+  getMembershipFromTx = async (id: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
         membershipNFTsWithHash,
@@ -83,4 +83,4 @@ class PocpGetters {
   };
 }
 
-export default PocpGetters;
+export default Getters;
