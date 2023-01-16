@@ -241,7 +241,7 @@ class Rep3 {
                         }
                       }
                     } else {
-                      throw 'Transaction failed';
+                      throw { error: 'Transaction failed' };
                     }
                   } catch (error) {
                     throw error;
@@ -286,7 +286,7 @@ class Rep3 {
                         }
                       }
                     } else {
-                      throw 'Transaction failed';
+                      throw { error: 'Transaction failed' };
                     }
                   } catch (error) {
                     throw error;
@@ -294,7 +294,9 @@ class Rep3 {
                 }
               );
           } else {
-            throw 'Could not get user signature. Check console for error';
+            throw {
+              error: 'Could not get user signature. Check console for error',
+            };
           }
         }
       );

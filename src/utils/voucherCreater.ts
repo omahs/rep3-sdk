@@ -2,7 +2,7 @@ export const generateData = (
   levels: string | any[],
   categories: string | any[]
 ) => {
-  if (levels.length != categories.length) {
+  if (levels.length !== categories.length) {
     return [];
   }
   let levelCategoryArray = [];

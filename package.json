@@ -11,10 +11,10 @@
     "node": ">=10"
   },
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
+    "start": "npx tsdx watch",
+    "build": "npx tsdx build",
     "test": "tsdx test",
-    "lint": "tsdx lint",
+    "lint": "npx tsdx lint --fix",
     "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why"
