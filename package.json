@@ -1,5 +1,5 @@
 {
-  "version": "6.2.2",
+  "version": "0.0.1--development",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -34,9 +34,9 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "pocp-service-sdk",
-  "author": "Drepute Labs",
-  "module": "dist/pocp-service-sdk.esm.js",
+  "name": "@rep3/rep3-sdk",
+  "author": "Rep3 Labs",
+  "module": "dist/rep3-sdk.esm.js",
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
     "axios": "^0.27.2",
@@ -52,5 +52,22 @@
     "**/@typescript-eslint/eslint-plugin": "^4.1.1",
     "**/@typescript-eslint/parser": "^4.1.1"
   },
-  "dependencies": {}
+  "description": "`rep3-sdk` is the ts package for projects to integrate rep3-protocol and services in their projects. This documentation will provide various ways and code snippets for the same. To know more about the protocol head over to our [docs](https://docs.rep3.gg/)",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Drepute/rep3-sdk.git"
+  },
+  "keywords": [
+    "soul",
+    "bound",
+    "token",
+    "NFT"
+  ],
+  "bugs": {
+    "url": "https://github.com/Drepute/rep3-sdk/issues"
+  },
+  "homepage": "https://github.com/Drepute/rep3-sdk#readme"
 }
