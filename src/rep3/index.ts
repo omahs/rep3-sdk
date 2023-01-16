@@ -25,8 +25,8 @@ class Rep3 {
   contractInfo!: IContractFactory;
   ProxyContractInstance!: any;
   biconomyInstance: any;
-  networkWeb3: typeof Web3.givenProvider | undefined;
-  walletWeb3: typeof Web3.givenProvider;
+  networkWeb3: any;
+  walletWeb3: any;
   packageInitialised: boolean;
 
   constructor(
