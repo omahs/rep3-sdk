@@ -2,7 +2,6 @@ export interface IContractAddress {
   manager: string;
   beacon: string;
   router: string;
-  trustedForwarder: string;
 }
 
 export interface IContractAbi {

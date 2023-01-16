@@ -50,12 +50,12 @@ class Getters {
     }
   };
 
-  getMembershipFromTx = async (id: string) => {
+  getMembershipFromTx = async (txHash: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
         membershipNFTsWithHash,
         {
-          id,
+          txHash,
         },
         this.subgraphUrl
       );

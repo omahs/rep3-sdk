@@ -57,7 +57,7 @@ query($claimer: String) {
 `;
 
 export const membershipNFTsWithHash = `
-query($id: String) {
+query($txHash: String) {
   membershipNFTs(where:{id:$id}){
     id
     metadataUri

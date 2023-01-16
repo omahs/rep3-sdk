@@ -49,6 +49,7 @@ class Rep3 {
           walletProvider,
           apiKey: this.config.apiKey,
           debug: true,
+          contractAddresses: [this.ContractAddress.router],
         }
       );
       this.networkWeb3 = new Web3(this.biconomyInstance);
@@ -67,6 +68,11 @@ class Rep3 {
     this.signerAddress = await this.signer.getAddress();
 
     if (this.config) {
+      console.log(
+        'manager',
+        this.ContractAbi?.manager,
+        this.ContractAddress?.manager
+      );
       this.biconomyInstance
         .onEvent(this.biconomyInstance.READY, async () => {
           this.Instance = {
@@ -121,6 +127,7 @@ class Rep3 {
     callbackFunction?: Function
   ) => {
     //performs relay function if config file is set
+    console.log('here.......', daoName, daoSymbol, approverAddresses);
 
     if (this.config) {
       const domainType = [
@@ -144,7 +151,7 @@ class Rep3 {
       const nonce: any = await this.Instance?.manager?.methods
         .getNonce(this.signerAddress)
         .call();
-
+      console.log('function signature ====>', this.Instance.manager);
       let functionSignature = this.Instance?.manager?.methods
         .deployREP3TokenProxy(
           daoName,
@@ -169,6 +176,8 @@ class Rep3 {
         primaryType: 'MetaTransaction',
         message: message,
       });
+
+      console.log('data to sign', dataToSign);
 
       await this.walletWeb3.currentProvider.sendAsync(
         {
@@ -244,18 +253,6 @@ class Rep3 {
             const r = '0x' + signature.substring(0, 64);
             const s = '0x' + signature.substring(64, 128);
             const v = parseInt(signature.substring(128, 130), 16);
-            console.log(
-              'sig',
-              result,
-              'r',
-              r,
-              's',
-              s,
-              'v',
-              v,
-              'funcSig',
-              functionSignature
-            );
             const promiEvent: any = this.Instance?.manager?.methods
               .executeMetaTransaction(
                 this.signerAddress,
@@ -306,16 +303,15 @@ class Rep3 {
     }
   };
 
-  _generateEnd = (
-    to: [string]): number[] => {
-      let endArray: number[] = [];
-      to.forEach((_, i) => {
-        if (i + 1 < to.length) {
-            endArray.push(i + 1)
-        }
-    })
-      return endArray;
-  }
+  _generateEnd = (to: [string]): number[] => {
+    let endArray: number[] = [];
+    to.forEach((_, i) => {
+      if (i + 1 < to.length) {
+        endArray.push(i + 1);
+      }
+    });
+    return endArray;
+  };
 
   /*
    * @param dao's contract address in string
@@ -332,7 +328,7 @@ class Rep3 {
     categories: [number],
     to: [string],
     tokenUris: string,
-    signType: string = "signTypedDatav2.0"
+    signType: string = 'signTypedDatav2.0'
   ) => {
     console.log('Address', to);
     const domain = {
@@ -398,7 +394,7 @@ class Rep3 {
     contractAddress: string,
     voucher: IMembershipVoucherV1 | IMembershipVoucherV2,
     approvedAddressIndex: number,
-    signType: string = "signTypedDatav2.0",
+    signType: string = 'signTypedDatav2.0',
     gas: number,
     gasLimit: number,
     transactionHashCallback: Function,
@@ -411,9 +407,7 @@ class Rep3 {
       );
       let userAddress = this.signerAddress;
       const proxyContract = new this.walletWeb3.eth.Contract(
-        signType === 'signTypedDatav2.0'
-          ? this.ContractAbi.proxy
-          : ProxyV1,
+        signType === 'signTypedDatav2.0' ? this.ContractAbi.proxy : ProxyV1,
         contractAddress
       );
       try {
@@ -431,7 +425,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function (hash: any) {
+        tx.on('transactionHash', async function(hash: any) {
           try {
             await transactionHashCallback(hash);
           } catch (error) {
@@ -510,7 +504,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function (hash: any) {
+        tx.on('transactionHash', async function(hash: any) {
           try {
             console.log(`Transaction hash is ${hash}`);
             await transactionHashCallback(hash);
@@ -627,7 +621,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function (hash: any) {
+        tx.on('transactionHash', async function(hash: any) {
           try {
             console.log(`Transaction hash is ${hash}`);
             await transactionHashCallback(hash);
@@ -740,7 +734,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function (hash: any) {
+        tx.on('transactionHash', async function(hash: any) {
           try {
             console.log(`Transaction hash is ${hash}`);
             await transactionHashCallback(hash);
@@ -795,9 +789,7 @@ class Rep3 {
       );
       let userAddress = this.signerAddress;
       const proxyContract = new this.walletWeb3.eth.Contract(
-        signType === 'signTypedDatav2.0'
-          ? this.ContractAbi.proxy
-          : ProxyV1,
+        signType === 'signTypedDatav2.0' ? this.ContractAbi.proxy : ProxyV1,
         contractAddress
       );
       try {
@@ -820,7 +812,7 @@ class Rep3 {
             signatureType: this.biconomyInstance.EIP712_SIGN,
             gasLimit,
           });
-        tx.on('transactionHash', async function (hash: any) {
+        tx.on('transactionHash', async function(hash: any) {
           try {
             await transactionHashCallback(hash);
           } catch (error) {
@@ -846,9 +838,7 @@ class Rep3 {
     } else {
       //performs direct contract call if no config file is set
       const proxyContract = new this.walletWeb3.eth.Contract(
-        signType === 'signTypedDatav2.0'
-          ? this.ContractAbi.proxy
-          : ProxyV1,
+        signType === 'signTypedDatav2.0' ? this.ContractAbi.proxy : ProxyV1,
         contractAddress
       );
       proxyContract.methods
@@ -868,7 +858,7 @@ class Rep3 {
             throw error;
           }
         })
-        .on('error', function (err: any) {
+        .on('error', function(err: any) {
           console.error('-------err-------', new Error(err).message);
           throw err;
         });
