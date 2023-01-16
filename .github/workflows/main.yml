@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -20,10 +21,9 @@ jobs:
         name: Build
         env:
           CI: true
-
-        name: Publish
       - run: |
-            npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
-            npm publish --ignore-scripts
+          npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
+          npm publish --ignore-scripts
+        name: Publish
         env:
-            NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
