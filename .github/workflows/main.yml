@@ -11,17 +11,17 @@ jobs:
       matrix:
         node-version: [16.x]
     steps:
-      # - uses: actions/checkout@v2
-      # - name: Build on Node.js ${{ matrix.node-version }}
-      #   uses: actions/setup-node@v1
-      #   with:
-      #     node-version: ${{ matrix.node-version }}
-      # - run: yarn
-      #   name: Install
-      # - run: npm run build --if-present
-      #   name: Build
-      #   env:
-      #     CI: true
+      - uses: actions/checkout@v2
+      - name: Build on Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: yarn
+        name: Install
+      - run: npm run build --if-present
+        name: Build
+        env:
+          CI: true
       - run: |
           npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
           npm publish --ignore-scripts
