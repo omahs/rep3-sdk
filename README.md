@@ -19,7 +19,7 @@ rep3-protocol enables communities to
 Install the package with yarn or npm:
 
 ```bash
-npm i rep3-sdk
+npm i @rep3/rep3-sdk
 yarn add rep3-sdk
 ```
 
