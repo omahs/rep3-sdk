@@ -1,11 +1,3 @@
-// export const daoWithTxHash = `
-// query($txHash:String) {
-//   daos(where:{txHash:$txHash}){
-//     id
-//     txHash
-//   }
-// `;
-
 export const daoWithTxHash = `
 query($txHash: String) {
   daos(where:{txHash:$txHash}){

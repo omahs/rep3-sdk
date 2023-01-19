@@ -10,9 +10,11 @@ import {
 } from '../types';
 // import { eventListener, EventsEnum } from '../utils/eventListeners';
 import ProxyV1 from '../contracts/abi/proxy/proxyV1.json';
-import Web3 from 'web3';
+
+import { ethers } from 'ethers';
 import { createVoucher, generateData } from '../utils/voucherCreater';
 import { getApproversForDao } from '../utils/internalFunctions';
+import { getSignatureParameters } from '../utils/signHelper';
 
 class Rep3 {
   signer!: any;
@@ -31,20 +33,21 @@ class Rep3 {
 
   constructor(
     getSigner: any,
-    walletProvider: typeof Web3.givenProvider,
+    walletProvider: any,
     chainId: number,
     contractAddressConfig: IContractAddress | any,
     config: IConfig | undefined
   ) {
     this.signer = getSigner;
-    this.walletWeb3 = new Web3(walletProvider);
+    this.walletWeb3 = new ethers.providers.Web3Provider(walletProvider);
     this.chainId = chainId;
     this.ContractAddress = contractAddressConfig;
     this.packageInitialised = false;
     if (config) {
       this.config = config;
+
       this.biconomyInstance = new this.config.biconomyInstance(
-        new Web3.providers.HttpProvider(this.config.relayURL),
+        new ethers.providers.JsonRpcProvider(this.config.relayURL),
         {
           walletProvider,
           apiKey: this.config.apiKey,
@@ -52,7 +55,9 @@ class Rep3 {
           contractAddresses: [this.ContractAddress.router],
         }
       );
-      this.networkWeb3 = new Web3(this.biconomyInstance);
+      this.networkWeb3 = new ethers.providers.Web3Provider(
+        this.biconomyInstance
+      );
     }
   }
 
@@ -68,25 +73,17 @@ class Rep3 {
     this.signerAddress = await this.signer.getAddress();
 
     if (this.config) {
-      console.log(
-        'manager',
-        this.ContractAbi?.manager,
-        this.ContractAddress?.manager
-      );
       this.biconomyInstance
         .onEvent(this.biconomyInstance.READY, async () => {
           this.Instance = {
-            manager: new this.networkWeb3.eth.Contract(
-              this.ContractAbi?.manager,
-              this.ContractAddress?.manager
+            manager: new ethers.Contract(
+              this.ContractAddress.manager,
+              this.ContractAbi.manager,
+              this.biconomyInstance.getSignerByAddress(this.signerAddress)
             ),
             beacon: undefined,
           };
           this.packageInitialised = true;
-          console.log(
-            'Biconomy Initialized successfully!!!!',
-            this.packageInitialised
-          );
         })
         .onEvent(this.biconomyInstance.ERROR, (error: any, message: any) => {
           throw {
@@ -127,8 +124,6 @@ class Rep3 {
     callbackFunction?: Function
   ) => {
     //performs relay function if config file is set
-    console.log('here.......', daoName, daoSymbol, approverAddresses);
-
     if (this.config) {
       const domainType = [
         { name: 'name', type: 'string' },
@@ -148,19 +143,21 @@ class Rep3 {
         salt: '0x' + this.chainId.toString(16).padStart(64, '0'),
       };
 
-      const nonce: any = await this.Instance?.manager?.methods
-        .getNonce(this.signerAddress)
-        .call();
-      console.log('function signature ====>', this.Instance.manager);
-      let functionSignature = this.Instance?.manager?.methods
-        .deployREP3TokenProxy(
+      console.log('manager', this.Instance.manager, this.ContractAbi.manager);
+      let contractInterface = new ethers.utils.Interface(
+        this.ContractAbi.manager
+      );
+      let functionSignature = contractInterface.encodeFunctionData(
+        'deployREP3TokenProxy',
+        [
           daoName,
           daoSymbol,
           approverAddresses,
           this.ContractAddress.beacon,
-          this.ContractAddress.router
-        )
-        .encodeABI();
+          this.ContractAddress.router,
+        ]
+      );
+      let nonce = await this.Instance.manager.getNonce(this.signerAddress);
 
       let message: any = {};
       message.nonce = parseInt(nonce);
@@ -179,129 +176,48 @@ class Rep3 {
 
       console.log('data to sign', dataToSign);
 
-      await this.walletWeb3.currentProvider.sendAsync(
-        {
-          jsonrpc: '2.0',
-          id: 999999999999,
-          method: 'eth_signTypedData_v3',
-          params: [this.signerAddress, dataToSign],
-        },
-        async (err: any, result: any) => {
-          if (err) {
-            console.log('error caught then catch', err);
-            throw err;
-          }
-          if (result && !result.result) {
-            const signature = result.substring(2);
-            const r = '0x' + signature.substring(0, 64);
-            const s = '0x' + signature.substring(64, 128);
-            const v = parseInt(signature.substring(128, 130), 16);
-            console.log(
-              'sig',
-              result,
-              'r',
-              r,
-              's',
-              s,
-              'v',
-              v,
-              'funcSig',
-              functionSignature
-            );
-            const promiEvent: any = this.Instance?.manager?.methods
-              .executeMetaTransaction(
-                this.signerAddress,
-                functionSignature,
-                r,
-                s,
-                v
-              )
-              .send({
-                from: this.signerAddress,
-              });
-            promiEvent
-              .on('transactionHash', async (hash: any) => {
-                try {
-                  await transactionHashCallback(hash);
-                } catch (error) {
-                  throw error;
-                }
-              })
-              .once(
-                'confirmation',
-                async (_confirmationNumber: any, receipt: any) => {
-                  try {
-                    if (receipt.status) {
-                      console.log('Transaction processed successfully');
-                      if (callbackFunction) {
-                        try {
-                          await callbackFunction(receipt);
-                        } catch (error) {
-                          throw error;
-                        }
-                      }
-                    } else {
-                      throw { error: 'Transaction failed' };
-                    }
-                  } catch (error) {
-                    throw error;
-                  }
-                }
-              );
-          } else if (result && result.result) {
-            const signature = result.result.substring(2);
-            const r = '0x' + signature.substring(0, 64);
-            const s = '0x' + signature.substring(64, 128);
-            const v = parseInt(signature.substring(128, 130), 16);
-            const promiEvent: any = this.Instance?.manager?.methods
-              .executeMetaTransaction(
-                this.signerAddress,
-                functionSignature,
-                r,
-                s,
-                v
-              )
-              .send({
-                from: this.signerAddress,
-              });
-            promiEvent
-              .on('transactionHash', async (hash: any) => {
-                try {
-                  await transactionHashCallback(hash);
-                } catch (error) {
-                  throw error;
-                }
-              })
-              .once(
-                'confirmation',
-                async (_confirmationNumber: any, receipt: any) => {
-                  try {
-                    if (receipt.status) {
-                      console.log('Transaction processed successfully');
-                      if (callbackFunction) {
-                        try {
-                          await callbackFunction(receipt);
-                        } catch (error) {
-                          throw error;
-                        }
-                      }
-                    } else {
-                      throw { error: 'Transaction failed' };
-                    }
-                  } catch (error) {
-                    throw error;
-                  }
-                }
-              );
-          } else {
-            throw {
-              error: 'Could not get user signature. Check console for error',
-            };
-          }
-        }
+      let signature = await this.walletWeb3.send('eth_signTypedData_v3', [
+        this.signerAddress,
+        dataToSign,
+      ]);
+      let { r, s, v } = getSignatureParameters(signature);
+      let tx = await this.Instance.manager.executeMetaTransaction(
+        this.signerAddress,
+        functionSignature,
+        r,
+        s,
+        v
       );
+
+      console.log('Transaction hash : ', tx);
+      if (transactionHashCallback) {
+        try {
+          await transactionHashCallback(tx);
+        } catch (error) {
+          throw error;
+        }
+      }
+
+      const confirmation = await tx.wait();
+      console.log('Confirmed hash : ', confirmation);
+      if (callbackFunction) {
+        try {
+          await callbackFunction(confirmation);
+        } catch (error) {
+          throw error;
+        }
+      }
     } else {
       //performs direct contract call if no config file is set
+      const tx = await this.Instance.manager.deployREP3TokenProxy(
+        daoName,
+        daoSymbol,
+        approverAddresses,
+        this.ContractAddress.beacon,
+        this.ContractAddress.router
+      );
+      const res = await tx.wait();
+      return res;
     }
   };
 
@@ -403,55 +319,87 @@ class Rep3 {
     callbackFunction?: Function
   ) => {
     if (this.config) {
-      let contract = new this.networkWeb3.eth.Contract(
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
         this.ContractAbi.router,
-        this.ContractAddress.router
+        this.biconomyInstance.getSignerByAddress(this.signerAddress)
+      );
+
+      let proxyInterface = new ethers.utils.Interface(
+        signType === 'signTypedDatav2.0' ? this.ContractAbi.proxy : ProxyV1
+      );
+      let functionSignature = proxyInterface.encodeFunctionData(
+        'claimMembership',
+        [voucher, approvedAddressIndex]
       );
       let userAddress = this.signerAddress;
-      const proxyContract = new this.walletWeb3.eth.Contract(
-        signType === 'signTypedDatav2.0' ? this.ContractAbi.proxy : ProxyV1,
-        contractAddress
-      );
-      try {
-        let tx = contract.methods
-          .routeRequest({
-            to: contractAddress,
-            gas,
-            value: 0,
-            data: proxyContract.methods
-              .claimMembership(voucher, approvedAddressIndex)
-              .encodeABI(),
-          })
-          .send({
-            from: userAddress,
-            signatureType: this.biconomyInstance.EIP712_SIGN,
-            gasLimit,
-          });
-        tx.on('transactionHash', async function(hash: any) {
+
+      let { data } = await contract.populateTransaction.routeRequest({
+        to: contractAddress,
+        gas,
+        value: 0,
+        data: functionSignature,
+      });
+      let provider = this.biconomyInstance.getEthersProvider();
+
+      let gasLimits = await provider.estimateGas({
+        to: this.ContractAddress.router,
+        from: userAddress,
+        data: data,
+      });
+      console.log('Gas limit : ', gasLimit);
+
+      let txParams = {
+        data: data,
+        to: this.ContractAddress.router,
+        from: userAddress,
+        gasLimit: gasLimits, // optional
+        signatureType: 'EIP712_SIGN',
+      };
+
+      let tx = await provider.send('eth_sendTransaction', [txParams]);
+      console.log('Transaction hash : ', gasLimit, tx);
+      if (transactionHashCallback) {
+        try {
+          await transactionHashCallback(tx);
+        } catch (error) {
+          throw error;
+        }
+      }
+
+      provider.once(tx, async (transaction: any) => {
+        console.log('TX HASH', transaction);
+        if (callbackFunction) {
           try {
-            await transactionHashCallback(hash);
+            await callbackFunction(transaction);
           } catch (error) {
             throw error;
           }
-        }).once(
-          'confirmation',
-          async (confirmationNumber: any, receipt: any) => {
-            console.log(receipt);
-            console.log(receipt.transactionHash, confirmationNumber);
-            if (callbackFunction) {
-              try {
-                await callbackFunction(receipt);
-              } catch (error) {
-                throw error;
-              }
-            }
-          }
-        );
-      } catch (error) {
-        console.log('Catched Error', error);
-      }
+        }
+      });
     } else {
       //performs direct contract call if no config file is set
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
+        this.ContractAbi.router,
+        this.signer
+      );
+
+      let proxyInterface = new ethers.utils.Interface(
+        signType === 'signTypedDatav2.0' ? this.ContractAbi.proxy : ProxyV1
+      );
+      let functionSignature = proxyInterface.encodeFunctionData(
+        'claimMembership',
+        [voucher, approvedAddressIndex]
+      );
+      const res = await contract.routeRequest({
+        to: contractAddress,
+        gas,
+        value: 0,
+        data: functionSignature,
+      });
+      const tx = res.wait();
+      return tx;
     }
   };
 
@@ -478,59 +426,83 @@ class Rep3 {
     callbackFunction?: Function
   ) => {
     if (this.config) {
-      let contract = new this.networkWeb3.eth.Contract(
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
         this.ContractAbi.router,
-        this.ContractAddress.router
+        this.biconomyInstance.getSignerByAddress(this.signerAddress)
       );
-
+      const datas = generateData([level], [category])[0];
+      let proxyInterface = new ethers.utils.Interface(this.ContractAbi.proxy);
+      let functionSignature = proxyInterface.encodeFunctionData(
+        'updateMembership',
+        [tokenId, datas, metaDataHash]
+      );
       let userAddress = this.signerAddress;
 
-      const proxyContract = new this.walletWeb3.eth.Contract(
-        this.ContractAbi.proxy,
-        contractAddress
-      );
+      let { data } = await contract.populateTransaction.routeRequest({
+        to: contractAddress,
+        gas,
+        value: 0,
+        data: functionSignature,
+      });
+      let provider = this.biconomyInstance.getEthersProvider();
 
-      const data = generateData([level], [category])[0];
-      try {
-        let tx = contract.methods
-          .routeRequest({
-            to: contractAddress,
-            gas,
-            value: 0,
-            data: proxyContract.methods
-              .updateMembership(tokenId, data, metaDataHash)
-              .encodeABI(),
-          })
-          .send({
-            from: userAddress,
-            signatureType: this.biconomyInstance.EIP712_SIGN,
-            gasLimit,
-          });
-        tx.on('transactionHash', async function(hash: any) {
+      let gasLimits = await provider.estimateGas({
+        to: this.ContractAddress.router,
+        from: userAddress,
+        data: data,
+      });
+      console.log('Gas limit : ', gasLimit);
+
+      let txParams = {
+        data: data,
+        to: this.ContractAddress.router,
+        from: userAddress,
+        gasLimit: gasLimits, // optional
+        signatureType: 'EIP712_SIGN',
+      };
+
+      let tx = await provider.send('eth_sendTransaction', [txParams]);
+      console.log('Transaction hash : ', gasLimit, tx);
+      if (transactionHashCallback) {
+        try {
+          await transactionHashCallback(tx);
+        } catch (error) {
+          throw error;
+        }
+      }
+
+      provider.once(tx, async (transaction: any) => {
+        console.log('TX HASH', transaction);
+        if (callbackFunction) {
           try {
-            console.log(`Transaction hash is ${hash}`);
-            await transactionHashCallback(hash);
+            await callbackFunction(transaction);
           } catch (error) {
             throw error;
           }
-        }).once(
-          'confirmation',
-          async (confirmationNumber: any, receipt: any) => {
-            console.log(receipt);
-            console.log(receipt.transactionHash, confirmationNumber);
-            if (callbackFunction) {
-              console.log('hash tx....', receipt);
-              try {
-                await callbackFunction(receipt);
-              } catch (error) {
-                throw error;
-              }
-            }
-          }
-        );
-      } catch (error) {
-        console.log('Catched Error', error);
-      }
+        }
+      });
+    } else {
+      //performs direct contract call if no config file is set
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
+        this.ContractAbi.router,
+        this.signer
+      );
+      const datas = generateData([level], [category])[0];
+      let proxyInterface = new ethers.utils.Interface(this.ContractAbi.proxy);
+      let functionSignature = proxyInterface.encodeFunctionData(
+        'updateMembership',
+        [tokenId, datas, metaDataHash]
+      );
+      const res = await contract.routeRequest({
+        to: contractAddress,
+        gas,
+        value: 0,
+        data: functionSignature,
+      });
+      const tx = res.wait();
+      return tx;
     }
   };
 
@@ -596,86 +568,84 @@ class Rep3 {
     callbackFunction?: Function
   ) => {
     if (this.config) {
-      let contract = new this.networkWeb3.eth.Contract(
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
         this.ContractAbi.router,
-        this.ContractAddress.router
+        this.biconomyInstance.getSignerByAddress(this.signerAddress)
       );
 
+      let proxyInterface = new ethers.utils.Interface(this.ContractAbi.proxy);
+      let functionSignature = proxyInterface.encodeFunctionData('claimBadge', [
+        voucher,
+        memberTokenId,
+        approveIndex,
+      ]);
       let userAddress = this.signerAddress;
 
-      const proxyContract = new this.walletWeb3.eth.Contract(
-        this.ContractAbi.proxy,
-        contractAddress
-      );
+      let { data } = await contract.populateTransaction.routeRequest({
+        to: contractAddress,
+        gas,
+        value: 0,
+        data: functionSignature,
+      });
+      let provider = this.biconomyInstance.getEthersProvider();
 
-      try {
-        let tx = contract.methods
-          .routeRequest({
-            to: contractAddress,
-            gas,
-            value: 0,
-            data: proxyContract.methods
-              .claimBadge(voucher, memberTokenId, approveIndex)
-              .encodeABI(),
-          })
-          .send({
-            from: userAddress,
-            signatureType: this.biconomyInstance.EIP712_SIGN,
-            gasLimit,
-          });
-        tx.on('transactionHash', async function(hash: any) {
+      let gasLimits = await provider.estimateGas({
+        to: this.ContractAddress.router,
+        from: userAddress,
+        data: data,
+      });
+      console.log('Gas limit : ', gasLimit);
+
+      let txParams = {
+        data: data,
+        to: this.ContractAddress.router,
+        from: userAddress,
+        gasLimit: gasLimits, // optional
+        signatureType: 'EIP712_SIGN',
+      };
+
+      let tx = await provider.send('eth_sendTransaction', [txParams]);
+      console.log('Transaction hash : ', gasLimit, tx);
+      if (transactionHashCallback) {
+        try {
+          await transactionHashCallback(tx);
+        } catch (error) {
+          throw error;
+        }
+      }
+
+      provider.once(tx, async (transaction: any) => {
+        console.log('TX HASH', transaction);
+        if (callbackFunction) {
           try {
-            console.log(`Transaction hash is ${hash}`);
-            await transactionHashCallback(hash);
+            await callbackFunction(transaction);
           } catch (error) {
             throw error;
           }
-        }).once(
-          'confirmation',
-          async (confirmationNumber: any, receipt: any) => {
-            console.log(receipt.transactionHash, confirmationNumber);
-            if (callbackFunction) {
-              console.log('hash tx....', receipt);
-              try {
-                await callbackFunction(receipt);
-              } catch (error) {
-                throw error;
-              }
-            }
-          }
-        );
-      } catch (error) {
-        console.log('Catched Error', error);
-      }
+        }
+      });
     } else {
-      //performs direct contract call if no config file is set
-      // try {
-      //   this.ProxyContractInstance = new this.walletWeb3.eth.Contract(
-      //     this.ContractAbi?.pocpProxy,
-      //     contractAddress
-      //   );
-      //   const res = await (
-      //     await this.ProxyContractInstance?.claimMembership(
-      //       voucher,
-      //       approvedAddressIndex
-      //     )
-      //   ).wait();
-      //   if (callbackFunction) {
-      //     try {
-      //       await eventListener(
-      //         this.PocpInstance.pocpManager,
-      //         EventsEnum.MembershipClaimed,
-      //         callbackFunction,
-      //         res.transactionHash
-      //       );
-      //     } catch (error) {
-      //       throw error;
-      //     }
-      //   }
-      //   return res;
-      // } catch (error) {
-      //   throw error;
-      // }
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
+        this.ContractAbi.router,
+        this.signer
+      );
+
+      let proxyInterface = new ethers.utils.Interface(this.ContractAbi.proxy);
+      let functionSignature = proxyInterface.encodeFunctionData('claimBadge', [
+        voucher,
+        memberTokenId,
+        approveIndex,
+      ]);
+      const res = await contract.routeRequest({
+        to: contractAddress,
+        gas,
+        value: 0,
+        data: functionSignature,
+      });
+      const tx = res.wait();
+      return tx;
     }
   };
 
@@ -689,18 +659,11 @@ class Rep3 {
     callbackFunction?: Function
   ) => {
     if (this.config) {
-      let contract = new this.networkWeb3.eth.Contract(
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
         this.ContractAbi.router,
-        this.ContractAddress.router
+        this.biconomyInstance.getSignerByAddress(this.signerAddress)
       );
-
-      let userAddress = this.signerAddress;
-
-      const proxyContract = new this.walletWeb3.eth.Contract(
-        this.ContractAbi.proxy,
-        contractAddress
-      );
-
       try {
         let currentApprovers: [string] = await getApproversForDao(
           contractAddress,
@@ -722,44 +685,99 @@ class Rep3 {
           removedApprovers,
           newlyAddedApprovers
         );
-        let tx = contract.methods
-          .routeRequest({
-            to: contractAddress,
-            gas,
-            value: 0,
-            data: proxyContract.methods
-              .changeApprover(newlyAddedApprovers, removedApprovers)
-              .encodeABI(),
-          })
-          .send({
-            from: userAddress,
-            signatureType: this.biconomyInstance.EIP712_SIGN,
-            gasLimit,
-          });
-        tx.on('transactionHash', async function(hash: any) {
+        let proxyInterface = new ethers.utils.Interface(this.ContractAbi.proxy);
+        let functionSignature = proxyInterface.encodeFunctionData(
+          'changeApprover',
+          [newlyAddedApprovers, removedApprovers]
+        );
+        let userAddress = this.signerAddress;
+
+        let { data } = await contract.populateTransaction.routeRequest({
+          to: contractAddress,
+          gas,
+          value: 0,
+          data: functionSignature,
+        });
+        let provider = this.biconomyInstance.getEthersProvider();
+
+        let gasLimits = await provider.estimateGas({
+          to: this.ContractAddress.router,
+          from: userAddress,
+          data: data,
+        });
+        console.log('Gas limit : ', gasLimit);
+
+        let txParams = {
+          data: data,
+          to: this.ContractAddress.router,
+          from: userAddress,
+          gasLimit: gasLimits, // optional
+          signatureType: 'EIP712_SIGN',
+        };
+
+        let tx = await provider.send('eth_sendTransaction', [txParams]);
+        console.log('Transaction hash : ', gasLimit, tx);
+        if (transactionHashCallback) {
           try {
-            console.log(`Transaction hash is ${hash}`);
-            await transactionHashCallback(hash);
+            await transactionHashCallback(tx);
           } catch (error) {
             throw error;
           }
-        }).once(
-          'confirmation',
-          async (confirmationNumber: any, receipt: any) => {
-            console.log(receipt.transactionHash, confirmationNumber);
-            if (callbackFunction) {
-              console.log('receipt tx....', receipt);
-              try {
-                await callbackFunction(receipt);
-              } catch (error) {
-                throw error;
-              }
+        }
+
+        provider.once(tx, async (transaction: any) => {
+          console.log('TX HASH', transaction);
+          if (callbackFunction) {
+            try {
+              await callbackFunction(transaction);
+            } catch (error) {
+              throw error;
             }
           }
-        );
+        });
       } catch (error) {
-        console.log('Catched Error', error);
+        throw error;
       }
+    } else {
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
+        this.ContractAbi.router,
+        this.signer
+      );
+
+      let currentApprovers: [string] = await getApproversForDao(
+        contractAddress,
+        subgraphUrl
+      );
+
+      const approverAddressesInLowercase = approverAddresses.map(ele =>
+        ele.toLowerCase()
+      );
+
+      const removedApprovers = currentApprovers.filter(
+        ele => !approverAddressesInLowercase.includes(ele.toLowerCase())
+      );
+      const newlyAddedApprovers = approverAddressesInLowercase.filter(
+        ele => !currentApprovers.includes(ele.toLowerCase())
+      );
+      console.log(
+        'removed approvers and added approvers',
+        removedApprovers,
+        newlyAddedApprovers
+      );
+      let proxyInterface = new ethers.utils.Interface(this.ContractAbi.proxy);
+      let functionSignature = proxyInterface.encodeFunctionData(
+        'changeApprover',
+        [newlyAddedApprovers, removedApprovers]
+      );
+      const res = await contract.routeRequest({
+        to: contractAddress,
+        gas,
+        value: 0,
+        data: functionSignature,
+      });
+      const tx = res.wait();
+      return tx;
     }
   };
 
@@ -776,94 +794,74 @@ class Rep3 {
     contractAddress: string,
     memberTokenIds: [number],
     type_: [number],
-    data: [number],
+    datas: [number],
     arrayOfTokenUri: [string],
-    signType: string,
+    // signType: string,
     gas: number,
     gasLimit: number,
     transactionHashCallback: Function,
     callbackFunction?: Function
   ) => {
     if (this.config) {
-      let contract = new this.networkWeb3.eth.Contract(
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
         this.ContractAbi.router,
-        this.ContractAddress.router
-      );
-      let userAddress = this.signerAddress;
-      const proxyContract = new this.walletWeb3.eth.Contract(
-        signType === 'signTypedDatav2.0' ? this.ContractAbi.proxy : ProxyV1,
-        contractAddress
+        this.biconomyInstance.getSignerByAddress(this.signerAddress)
       );
       try {
-        let tx = contract.methods
-          .routeRequest({
-            to: contractAddress,
-            gas,
-            value: 0,
-            data: proxyContract.methods
-              .batchIssueBadge(
-                memberTokenIds,
-                type_,
-                data,
-                `${arrayOfTokenUri.toString()},`
-              )
-              .encodeABI(),
-          })
-          .send({
-            from: userAddress,
-            signatureType: this.biconomyInstance.EIP712_SIGN,
-            gasLimit,
-          });
-        tx.on('transactionHash', async function(hash: any) {
+        let proxyInterface = new ethers.utils.Interface(this.ContractAbi.proxy);
+        let functionSignature = proxyInterface.encodeFunctionData(
+          '.batchIssueBadge',
+          [memberTokenIds, type_, datas, `${arrayOfTokenUri.toString()},`]
+        );
+        let userAddress = this.signerAddress;
+
+        let { data } = await contract.populateTransaction.routeRequest({
+          to: contractAddress,
+          gas,
+          value: 0,
+          data: functionSignature,
+        });
+        let provider = this.biconomyInstance.getEthersProvider();
+
+        let gasLimits = await provider.estimateGas({
+          to: this.ContractAddress.router,
+          from: userAddress,
+          data: data,
+        });
+        console.log('Gas limit : ', gasLimit);
+
+        let txParams = {
+          data: data,
+          to: this.ContractAddress.router,
+          from: userAddress,
+          gasLimit: gasLimits, // optional
+          signatureType: 'EIP712_SIGN',
+        };
+
+        let tx = await provider.send('eth_sendTransaction', [txParams]);
+        console.log('Transaction hash : ', gasLimit, tx);
+        if (transactionHashCallback) {
           try {
-            await transactionHashCallback(hash);
+            await transactionHashCallback(tx);
           } catch (error) {
             throw error;
           }
-        }).once(
-          'confirmation',
-          async (confirmationNumber: any, receipt: any) => {
-            console.log(receipt);
-            console.log(receipt.transactionHash, confirmationNumber);
-            if (callbackFunction) {
-              try {
-                await callbackFunction(receipt);
-              } catch (error) {
-                throw error;
-              }
+        }
+
+        provider.once(tx, async (transaction: any) => {
+          console.log('TX HASH', transaction);
+          if (callbackFunction) {
+            try {
+              await callbackFunction(transaction);
+            } catch (error) {
+              throw error;
             }
           }
-        );
-      } catch (error) {
-        console.log('Catched Error', error);
-      }
-    } else {
-      //performs direct contract call if no config file is set
-      const proxyContract = new this.walletWeb3.eth.Contract(
-        signType === 'signTypedDatav2.0' ? this.ContractAbi.proxy : ProxyV1,
-        contractAddress
-      );
-      proxyContract.methods
-        .batchIssueBadge(
-          memberTokenIds,
-          type_,
-          data,
-          `${arrayOfTokenUri.toString()},`
-        )
-        .send({
-          from: this.signerAddress,
-        })
-        .on('receipt', async (receipt: any) => {
-          try {
-            await transactionHashCallback(receipt);
-          } catch (error) {
-            throw error;
-          }
-        })
-        .on('error', function(err: any) {
-          console.error('-------err-------', new Error(err).message);
-          throw err;
         });
+      } catch (error) {
+        throw error;
+      }
     }
   };
 }
