@@ -95,9 +95,10 @@ class Rep3 {
       return Rep3;
     } else {
       this.Instance = {
-        manager: new this.walletWeb3.eth.Contract(
+        manager: new ethers.Contract(
+          this.ContractAddress?.manager,
           this.ContractAbi?.manager,
-          this.ContractAddress?.manager
+          this.signer
         ),
         beacon: undefined,
       };
@@ -217,6 +218,7 @@ class Rep3 {
         this.ContractAddress.router
       );
       const res = await tx.wait();
+      console.log('response', res);
       return res;
     }
   };
@@ -398,7 +400,7 @@ class Rep3 {
         value: 0,
         data: functionSignature,
       });
-      const tx = res.wait();
+      const tx = await res.wait();
       return tx;
     }
   };
@@ -811,7 +813,7 @@ class Rep3 {
       try {
         let proxyInterface = new ethers.utils.Interface(this.ContractAbi.proxy);
         let functionSignature = proxyInterface.encodeFunctionData(
-          '.batchIssueBadge',
+          'batchIssueBadge',
           [memberTokenIds, type_, datas, `${arrayOfTokenUri.toString()},`]
         );
         let userAddress = this.signerAddress;
@@ -862,6 +864,27 @@ class Rep3 {
       } catch (error) {
         throw error;
       }
+    } else {
+      let contract = new ethers.Contract(
+        this.ContractAddress.router,
+        this.ContractAbi.router,
+        this.signer
+      );
+
+      let proxyInterface = new ethers.utils.Interface(this.ContractAbi.proxy);
+      let functionSignature = proxyInterface.encodeFunctionData(
+        'batchIssueBadge',
+        [memberTokenIds, type_, datas, `${arrayOfTokenUri.toString()},`]
+      );
+      const res = await contract.routeRequest({
+        to: contractAddress,
+        gas,
+        value: 0,
+        data: functionSignature,
+      });
+      const tx = res.wait();
+      console.log('tx....', tx);
+      return tx;
     }
   };
 }
