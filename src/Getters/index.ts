@@ -16,7 +16,8 @@ class Getters {
    * @returns Array of tokens
    * @throws "Error"
    */
-  getCommunutyFromTx = async (txHash: string) => {
+
+  getCommunityFromTx = async (txHash: string) => {
     try {
       const communityDetail = await subgraphGetterFunction(
         daoWithTxHash,
