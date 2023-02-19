@@ -71,7 +71,7 @@ await rep3.createInstance()
 
 ### => Register a new community on rep3 (deploy a new ERC 721 contract)
 
-Registering community is equivalent to creating a new erc721 collective. Community has `approvers` with permission to dsitribute badges, upgrade/downgrade membership levels etc. Sender of this transaction becomes default `owner` of the community
+Registering community is equivalent to creating a new erc721 collective. Community has `approvers` with permission to distribute badges, upgrade/downgrade membership levels etc. Sender of this transaction becomes default `owner` of the community
 
 ```javascript
 await rep3.deploy(
@@ -82,7 +82,7 @@ await rep3.deploy(
       callback_function_confirming_events, //triggered once tx is confirmed
 )
 ```
->Note: `callback_function_tx_reciept` callback will be triggered with transaction reciept as parameter and `callback_function_confirming_events` callback will be triggered with contract emmitted events as parameters
+>Note: `callback_function_tx_reciept` callback will be triggered with transaction receipt as parameter and `callback_function_confirming_events` callback will be triggered with contract emitted events as parameters
 
 >Note: callbacks can be configured throughout sdk in other functions as well 
 
@@ -110,7 +110,7 @@ Details on the voucher specs below
 - array of levels as integer array
 - array of categories as integer array
 - array of member/claimer address
-- comma seperated string of arweave or ipfs metadata hash
+- comma separated string of arweave or ipfs metadata hash
   
 
 
@@ -122,7 +122,7 @@ const signedVoucher:<signedVoucher> = await rep3.createMembershipVoucher(
             [1,2],                                    // [<Levels of membership represented in 0,1...etc.>]
             [2,4],                                    // [<Levels of categories represented in 0,1...etc.>]
             ["0x0EB...4b53","0x0FG...3s67"],          // [<claimer address>]
-            "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",    //<string of metadata_hash seperated by comma>
+            "AdaDsjj...DGdI,Sdgguedsj...sfgadfD,",    //<string of metadata_hash separated by comma>
         )
 ```
 >Note: metadata string MUST have a `,` at the end
@@ -160,13 +160,13 @@ await rep3.claimMembershipNft(
 
 #### 3. Upgrade / Downgrade memberships
 
-Memberships can be pnly be upgraded / downgraded by `approver` using `upgradeMembership`
+Memberships can be only be upgraded / downgraded by `approver` using `upgradeMembership`
 
 `upgradeMembership` takes the following parameters
 - community contract address
 - membership token id to be upgraded
 - new level of membership
-- new categroy of membership
+- new category of membership
 - new metadata hash of membership token
 - callback_function_tx_reciept
 - callback_function_confirming_events
@@ -194,7 +194,7 @@ Association badges are the badges that are attached to membership badges. There 
 - community contract address
 - array of member token ids
 - array of badge types
-- comma seperated string of arweave or ipfs metadata hash
+- comma separated string of arweave or ipfs metadata hash
 - array of member nonces ([how does nonce work?](#how-does-nonce-work))
 - array of data (optional and can be ignored)
 
@@ -246,7 +246,7 @@ await rep3.claimAssociationBadges(
 
 ### => Utility functions 
 
-Utitlity functions are getter function that get the data from subgraphs
+Utility functions are getter function that get the data from subgraphs
 
 >Note: These three interactions (and others mentioned later) can be done directly through interacting with contracts or through a relayer.
 
